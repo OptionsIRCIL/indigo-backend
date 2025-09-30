@@ -1,4 +1,4 @@
-module indigo/backend
+module backend
 
 go 1.25.1
 
