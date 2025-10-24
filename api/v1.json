@@ -1,0 +1,81 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Indigo REST API",
+    "description": "Title",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://localhost:8000/api/v1"
+    }
+  ],
+  "paths": {
+    "/auth": {
+      "post": {
+        "summary": "Authenticate against LDAP to request an authentication token.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthenticationCredentials"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Credentials accepted"
+          },
+          "422": {
+            "description": "Credentials rejected"
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "summary": "'Hello World' endpoint.",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "Hello": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "description": "Successful authenticated response"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AuthenticationCredentials": {
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "indigo-token"
+      }
+    }
+  }
+}
