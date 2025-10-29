@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"backend/internal/service"
+	"backend/internal/util"
 	"context"
-	"log"
 	"net/http"
 )
 
@@ -13,15 +13,14 @@ func RequireAuth(jwtTransformer *service.JwtTransformer, next http.HandlerFunc) 
 		// Grab IndigoAuth cookie
 		cookies := r.CookiesNamed("IndigoAuth")
 		if len(cookies) != 1 {
-			w.WriteHeader(401)
+			util.ThrowHttpStatus(w, 401)
 			return
 		}
 
 		// Parse cookie
 		user, err := jwtTransformer.ValidateToken(cookies[0].Value)
 		if err != nil {
-			log.Println(err)
-			w.WriteHeader(401)
+			util.ThrowHttpStatus(w, 403)
 			return
 		}
 

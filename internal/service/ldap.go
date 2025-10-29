@@ -11,8 +11,10 @@ import (
 
 type LdapConnection struct {
 	Connection *ldap.Conn
-	url        string
 	Base       string
+	Domain     string
+	url        string
+	secure     bool
 }
 
 type LdapUser struct {
@@ -34,7 +36,7 @@ func (e *LdapError) Error() string {
 func (c *LdapConnection) AttemptAuth(username string, password string) error {
 	conn, err := ldap.DialURL(
 		c.url,
-		ldap.DialWithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
+		ldap.DialWithTLSConfig(&tls.Config{InsecureSkipVerify: !c.secure}),
 	)
 	if err != nil {
 		return err
@@ -54,11 +56,10 @@ func (c *LdapConnection) AttemptAuth(username string, password string) error {
 }
 
 func (c *LdapConnection) FetchUser(username string) (*LdapUser, error) {
-	// TODO: Use UID for more precise selection. uwu_directory doesn't apply UID yet, so I'm using CN in the interim.
 	searchRequest := ldap.NewSearchRequest(
 		c.Base,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		fmt.Sprintf("(&(objectClass=organizationalPerson)(cn=%s))", ldap.EscapeDN(username)),
+		fmt.Sprintf("(&(objectClass=organizationalPerson)(userPrincipalName=%s@*))", ldap.EscapeDN(username)),
 		[]string{"givenName", "mail", "sn", "memberOf", "cn"},
 		nil,
 	)
@@ -96,9 +97,11 @@ func (c *LdapConnection) FetchUser(username string) (*LdapUser, error) {
 
 func (c *LdapConnection) Initialize(username string, password string) error {
 	var err error
+	// TODO: this should fail cert check in prod if the cert is bad, but it's not doing that here for some reason.
+	// Works fine in AttemptAuth, confusingly
 	c.Connection, err = ldap.DialURL(
 		c.url,
-		ldap.DialWithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
+		ldap.DialWithTLSConfig(&tls.Config{InsecureSkipVerify: !c.secure}),
 	)
 	if err != nil {
 		return err
@@ -118,4 +121,8 @@ func (c *LdapConnection) Initialize(username string, password string) error {
 
 func (c *LdapConnection) SetUrl(url string) {
 	c.url = url
+}
+
+func (c *LdapConnection) SetSecure(v bool) {
+	c.secure = v
 }

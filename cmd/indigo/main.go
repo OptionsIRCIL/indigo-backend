@@ -4,49 +4,52 @@ package main
 import (
 	c "backend/internal/config"
 	s "backend/internal/service"
-	"fmt"
+	"backend/internal/util"
 	"log"
 	"net/http"
-	"os"
-
-	"github.com/joho/godotenv"
 )
 
 func main() {
-	log.Print("Hello, World!")
+	log.Print("Indigo CIL, v0.0.0")
 
 	// Load environment
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal(err)
+	config := util.LoadConfig()
+	log.Println("Initialized in environment", config.IndigoEnv)
+	if config.IndigoEnv == "dev" {
+		log.Println(
+			"WARNING! Running in development mode removes various safeguards and encryption features.",
+			"If you intend to deploy this software in a production environment, please use INDIGO_ENV=prod.",
+		)
 	}
 
 	// Populate LdapConnection
 	l := s.LdapConnection{
-		Base: os.Getenv("LDAP_BASE_DN"),
+		Base:   config.LdapSearchBase,
+		Domain: config.LdapDomain,
 	}
-	l.SetUrl(os.Getenv("LDAP_URL"))
+	l.SetUrl(config.LdapUrl)
 
 	// Initialize connection
-	err = l.Initialize(
-		os.Getenv("LDAP_USERNAME"),
-		os.Getenv("LDAP_PASSWORD"),
+	err := l.Initialize(
+		config.LdapUsername,
+		config.LdapPassword,
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
+	l.SetSecure(config.IndigoEnv == "prod")
 
 	// Initialize JWT & secret
 	jwtTransformer := s.JwtTransformer{}
-	jwtInitErr := jwtTransformer.SetSecret([]byte(os.Getenv("APP_SECRET")))
+	jwtInitErr := jwtTransformer.SetSecret([]byte(config.IndigoSecret))
 	if jwtInitErr != nil {
 		log.Fatal(jwtInitErr)
 	}
 
 	// Create routes
-	mux := c.CreateRoutes(&l, &jwtTransformer)
+	mux := c.CreateRoutes(config, &l, &jwtTransformer)
 
 	// Serve
-	fmt.Printf("Serving on :8080\n")
+	log.Printf("Serving on :8080\n")
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }

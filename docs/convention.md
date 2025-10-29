@@ -7,7 +7,7 @@ For variable names, all export variables should be written in
 
 Local variables should be written in camelCase. Acronyms are to be written with
 only the first letter capitalized in all cases except where said acronym is
-at the beginning of a local variable. I.E. between `HTMLParser` and `HtmlParser`
+at the beginning of a local variable. I.E. between `HTMLParser` and `HtmlParser`.
 
 For an export variable, the latter would be preferred, and between `parsedHTML`
 and `parsedHtml` for a local variable, the latter would also be preferred.[^1]
@@ -29,7 +29,7 @@ In Angular, lowercase kebab-case is preferred for both folder names and file nam
 For any other programming languages, the most standard convention
 for that language should be followed.
 
-Most plaintext and markdown documents should have a lowercase filename,
+Most plaintext and Markdown documents should have a lowercase filename,
 however certain special documents may be in all caps
 (excluding the extension which remains lowercase).
 

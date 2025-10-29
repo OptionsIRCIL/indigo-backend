@@ -28,7 +28,14 @@
             "description": "Credentials accepted"
           },
           "422": {
-            "description": "Credentials rejected"
+            "description": "Credentials rejected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HandledError"
+                }
+              }
+            }
           }
         }
       }
@@ -65,6 +72,17 @@
             "type": "string"
           },
           "password": {
+            "type": "string"
+          }
+        }
+      },
+      "HandledError": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "int"
+          },
+          "message": {
             "type": "string"
           }
         }
