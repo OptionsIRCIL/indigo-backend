@@ -48,7 +48,7 @@ func AuthEntry(
 		}
 
 		// Parse out username and attempt bind auth using typical AD credential format
-		fqUsername := "INDIGO\\" + payload.Username
+		fqUsername := config.LdapDomain + "\\" + payload.Username
 		authErr := conn.AttemptAuth(fqUsername, payload.Password)
 		if authErr != nil {
 			log.Printf("Authentication error for user %s: %s", fqUsername, authErr)
