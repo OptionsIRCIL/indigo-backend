@@ -59,7 +59,7 @@ func AuthEntry(
 		// Grab user details
 		user, userFetchErr := conn.FetchUser(payload.Username)
 		if userFetchErr != nil {
-			log.Printf("Unable to fetch details for user %s: %s", payload.Username, authErr)
+			log.Printf("Unable to fetch details for user %s: %s", payload.Username, userFetchErr)
 			throwAuthenticationError(w)
 			return
 		}
@@ -87,5 +87,7 @@ func AuthEntry(
 			SameSite: sameSite,
 		})
 		w.WriteHeader(204)
+
+		log.Printf("Authentication attempt successful for user: %s", payload.Username)
 	}
 }
