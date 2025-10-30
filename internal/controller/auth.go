@@ -48,7 +48,7 @@ func AuthEntry(
 		}
 
 		// Parse out username and attempt bind auth using typical AD credential format
-		fqUsername := "INDIGO\\" + payload.Username
+		fqUsername := config.LdapDomain + "\\" + payload.Username
 		authErr := conn.AttemptAuth(fqUsername, payload.Password)
 		if authErr != nil {
 			log.Printf("Authentication error for user %s: %s", fqUsername, authErr)
@@ -59,7 +59,7 @@ func AuthEntry(
 		// Grab user details
 		user, userFetchErr := conn.FetchUser(payload.Username)
 		if userFetchErr != nil {
-			log.Printf("Unable to fetch details for user %s: %s", payload.Username, authErr)
+			log.Printf("Unable to fetch details for user %s: %s", payload.Username, userFetchErr)
 			throwAuthenticationError(w)
 			return
 		}
@@ -87,5 +87,7 @@ func AuthEntry(
 			SameSite: sameSite,
 		})
 		w.WriteHeader(204)
+
+		log.Printf("Authentication attempt successful for user: %s", payload.Username)
 	}
 }

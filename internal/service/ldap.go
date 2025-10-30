@@ -56,6 +56,7 @@ func (c *LdapConnection) AttemptAuth(username string, password string) error {
 }
 
 func (c *LdapConnection) FetchUser(username string) (*LdapUser, error) {
+	// "%s@*" is used rather than just "%s" since the current userPrincipalNames are in the format "username@email.com".
 	searchRequest := ldap.NewSearchRequest(
 		c.Base,
 		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
