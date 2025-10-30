@@ -31,14 +31,23 @@ jobs:
     - name: Set version to workflow SHA
       run: sed -i 's/Indigo CIL, v0\.0\.0/Indigo CIL, workflow ${{ needs.tag.outputs.tag }}/' ./cmd/indigo/main.go
 
-    - name: Build
+    - name: Build server
       run: go build -v ./cmd/indigo
 
+    - name: Build API documentation
+      run: npx @redocly/cli@latest build-docs ./api/v1.json
+
     - uses: actions/upload-artifact@v4
-      name: Upload artifact
+      name: Upload server binary
       with:
         path: 'indigo'
         name: 'indigo'
+
+    - uses: actions/upload-artifact@v4
+      name: Upload API documentation
+      with:
+        path: 'redoc-static.html'
+        name: 'redoc-static.html'
 
   deploy:
     runs-on: self-hosted
@@ -46,12 +55,20 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     steps:
       - uses: actions/download-artifact@v4
-        name: Download workflow artifact
+        name: Download server artifact
         with:
           name: "indigo"
 
-      - name: Install binary
+      - uses: actions/download-artifact@v4
+        name: Download API documentation artifact
+        with:
+          name: "redoc-static.html"
+
+      - name: Install server
         run: install -m 775 indigo /stack/bin/
+
+      - name: Install API documentation
+        run: install -m 775 redoc-static.html /stack/doc/
 
       - name: Restart bleeding container
         run: docker compose --project-directory /stack restart bleeding
