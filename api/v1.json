@@ -2,23 +2,40 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Indigo REST API",
-    "description": "Title",
-    "version": "1.0.0"
+    "description": "Documentation for interacting with OptionsIRCIL/indigo-backend over HTTP.",
+    "version": "0.0.0"
   },
   "servers": [
     {
-      "url": "https://localhost:8000/api/v1"
+      "url": "http://acm.cs.und.edu:58080/api/v1",
+      "description": "CI sandbox"
+    },
+    {
+      "url": "http://localhost:8000/api/v1",
+      "description": "Local development"
     }
   ],
   "paths": {
     "/auth": {
       "post": {
-        "summary": "Authenticate against LDAP to request an authentication token.",
+        "summary": "/auth",
+        "security": [],
+        "description": "Authenticate against LDAP to request an authentication token.",
         "requestBody": {
           "content": {
             "application/json": {
+              "required": true,
               "schema": {
                 "$ref": "#/components/schemas/AuthenticationCredentials"
+              },
+              "examples": {
+                "default": {
+                  "summary": "Authentication payload",
+                  "value": {
+                    "username": "john.doe",
+                    "password": "correct horse battery staple"
+                  }
+                }
               }
             }
           }
@@ -33,6 +50,15 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HandledError"
+                },
+                "examples": {
+                  "default": {
+                    "summary": "Incorrect credentials",
+                    "value": {
+                      "status": 422,
+                      "message": "Invalid credentials"
+                    }
+                  }
                 }
               }
             }
@@ -52,6 +78,14 @@
                   "properties": {
                     "Hello": {
                       "type": "string"
+                    }
+                  }
+                },
+                "examples": {
+                  "default": {
+                    "summary": "Response for user with name John Doe",
+                    "value": {
+                      "Hello": "John"
                     }
                   }
                 }
@@ -95,5 +129,10 @@
         "name": "indigo-token"
       }
     }
-  }
+  },
+  "security": [
+    {
+      "cookieAuth": []
+    }
+  ]
 }
