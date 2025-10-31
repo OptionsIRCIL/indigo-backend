@@ -63,7 +63,9 @@ jobs:
         name: Download API documentation artifact
         with:
           name: "redoc-static.html"
-          path: "index.html"
+
+      - name: Rename Redoc
+        run: mv redoc-static.html index.html
 
       - name: Install server
         run: install -m 775 indigo /stack/bin/
