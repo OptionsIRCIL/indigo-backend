@@ -64,14 +64,11 @@ jobs:
         with:
           name: "redoc-static.html"
 
-      - name: Rename Redoc
-        run: mv redoc-static.html index.html
-
       - name: Install server
         run: install -m 775 indigo /stack/bin/
 
       - name: Install API documentation
-        run: install -m 775 index.html /stack/www/api/
+        run: install -m 775 redoc-static.html /stack/www/api/
 
       - name: Restart bleeding container
         run: docker compose --project-directory /stack restart bleeding
