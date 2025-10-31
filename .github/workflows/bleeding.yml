@@ -47,7 +47,7 @@ jobs:
       name: Upload API documentation
       with:
         path: 'redoc-static.html'
-        name: 'index.html'
+        name: 'redoc-static.html'
 
   deploy:
     runs-on: self-hosted
@@ -62,7 +62,8 @@ jobs:
       - uses: actions/download-artifact@v4
         name: Download API documentation artifact
         with:
-          name: "index.html"
+          name: "redoc-static.html"
+          path: "index.html"
 
       - name: Install server
         run: install -m 775 indigo /stack/bin/
