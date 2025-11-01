@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"backend/internal/service"
-	"backend/internal/util"
 	"context"
 	"net/http"
+
+	"myoptions.info/indigo/backend/internal/service"
+	"myoptions.info/indigo/backend/internal/util"
 )
 
 func RequireAuth(jwtTransformer *service.JwtTransformer, next http.HandlerFunc) http.HandlerFunc {
@@ -23,6 +24,8 @@ func RequireAuth(jwtTransformer *service.JwtTransformer, next http.HandlerFunc) 
 			util.ThrowHttpStatus(w, 403)
 			return
 		}
+
+		// TODO: Verify iat > last password modification time
 
 		// Add user to context and continue
 		ctx := context.WithValue(r.Context(), "user", user)

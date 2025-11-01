@@ -1,4 +1,4 @@
-module backend
+module myoptions.info/indigo/backend
 
 go 1.25.1
 

@@ -68,7 +68,8 @@
     },
     "/": {
       "get": {
-        "summary": "'Hello World' endpoint.",
+        "summary": "/",
+        "description": "'Hello World' endpoint.",
         "responses": {
           "200": {
             "content": {

@@ -1,11 +1,12 @@
 package controller
 
 import (
-	"backend/internal/service"
-	u "backend/internal/util"
 	"log"
 	"net/http"
 	"regexp"
+
+	"myoptions.info/indigo/backend/internal/service"
+	u "myoptions.info/indigo/backend/internal/util"
 )
 
 type UserCredentials struct {

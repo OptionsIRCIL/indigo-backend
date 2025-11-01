@@ -9,16 +9,27 @@ import (
 	"strings"
 )
 
+// A JsonDecodeFailed abstracts away any error that may be encountered while
+// scanning to a struct in [util.DecodeJsonBody].
 type JsonDecodeFailed struct {
+	// An HTTP status relevant to the reason that scanning failed.
 	Status int
-	Msg    string
+
+	// A brief description of the error. Any 4xx errors may be shown to the
+	// user, but 5xx errors should be only shown in server logs.
+	Msg string
 }
 
+// Error interface. Returns err.Msg.
 func (err *JsonDecodeFailed) Error() string {
 	return err.Msg
 }
 
-// DecodeJSONBody mostly adapted from https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body /**
+// DecodeJSONBody scans the contents of an [http.ResponseWriter]'s body into a given struct iff the Content-Type of the
+// body is application/json and the payload conforms to the struct. Adapted from an [Alex Edwards article] pertaining
+// to parsing JSON request bodies.
+//
+// [Alex Edwards article]: https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body
 func DecodeJSONBody(w http.ResponseWriter, r *http.Request, target interface{}) *JsonDecodeFailed {
 	// Require "application/json" content type
 	contentType := r.Header.Get("Content-Type")

@@ -1,9 +1,10 @@
 package controller
 
 import (
-	"backend/internal/service"
-	"backend/internal/util"
 	"net/http"
+
+	"myoptions.info/indigo/backend/internal/service"
+	"myoptions.info/indigo/backend/internal/util"
 )
 
 func IndexHelloWorld(w http.ResponseWriter, r *http.Request) {

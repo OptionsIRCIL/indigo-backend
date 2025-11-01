@@ -7,14 +7,33 @@ import (
 	"github.com/joho/godotenv"
 )
 
+// A Config carries all relevant environment variables that are used across the application.
+// By fetching these variables ahead of time, we can avoid fetching environment variables
+// at the time of a request.
 type Config struct {
-	IndigoEnv      string
-	IndigoSecret   string
+	// The target environment type. Should be either "prod" or "dev". This variable is intended to activate
+	// or deactivate various application features that require additional configuration to run, thus making
+	// development environment configuration easier while retaining these features in production.
+	IndigoEnv string
+
+	// The HMAC256 secret to use for signing JWTs. Should be at least 32 characters.
+	IndigoSecret string
+
+	// The search base to use when fetching user details from LDAP.
 	LdapSearchBase string
-	LdapDomain     string
-	LdapUrl        string
-	LdapUsername   string
-	LdapPassword   string
+
+	// The Active Directory domain users of the application belong to. I.E., for a user ORG\john.doe,
+	// the domain is ORG.
+	LdapDomain string
+
+	// The URL of your Active Directory's LDAP. Should be of format "protocol://host:port".
+	LdapUrl string
+
+	// The username of an LDAP service account with the ability to read domain user details.
+	LdapUsername string
+
+	// The password of an LDAP service account with the ability to read domain user details.
+	LdapPassword string
 }
 
 func requireEnv(envKey string) string {
@@ -33,6 +52,8 @@ func envOrDefault(envKey string, defaultValue string) string {
 	return envValue
 }
 
+// LoadConfig loads all relevant environment variables into a [Config]. If any variables are found to be missing or
+// invalid, [log.Fatal] is called to terminate the application.
 func LoadConfig() *Config {
 	envErr := godotenv.Load()
 	if envErr != nil {

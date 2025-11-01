@@ -31,6 +31,9 @@ jobs:
     - name: Set version to workflow SHA
       run: sed -i 's/Indigo CIL, v0\.0\.0/Indigo CIL, workflow ${{ needs.tag.outputs.tag }}/' ./cmd/indigo/main.go
 
+    - name: Run tests
+      run:  go test ./... -v
+
     - name: Build server
       run: go build -v ./cmd/indigo
 

@@ -2,11 +2,12 @@
 package main
 
 import (
-	c "backend/internal/config"
-	s "backend/internal/service"
-	"backend/internal/util"
 	"log"
 	"net/http"
+
+	c "myoptions.info/indigo/backend/internal/config"
+	s "myoptions.info/indigo/backend/internal/service"
+	"myoptions.info/indigo/backend/internal/util"
 )
 
 func main() {
