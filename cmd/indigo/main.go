@@ -29,16 +29,18 @@ func main() {
 		Domain: config.LdapDomain,
 	}
 	l.SetUrl(config.LdapUrl)
-
-	// Initialize connection
-	err := l.Initialize(
+	l.SetCredentials(
 		config.LdapUsername,
 		config.LdapPassword,
 	)
+
+	// Initialize connection
+	err := l.Initialize()
 	if err != nil {
 		log.Fatal(err)
 	}
 	l.SetSecure(config.IndigoEnv == "prod")
+	defer l.Connection.Close()
 
 	// Initialize JWT & secret
 	jwtTransformer := s.JwtTransformer{}

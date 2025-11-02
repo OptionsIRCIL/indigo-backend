@@ -14,6 +14,6 @@ import m "myoptions.info/indigo/backend/internal/middleware"
 func CreateRoutes(config *util.Config, ldap *service.LdapConnection, jwtTransformer *service.JwtTransformer) *http.ServeMux {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/v1/auth", c.AuthEntry(config, ldap, jwtTransformer))
-	mux.HandleFunc("GET /", m.RequireAuth(jwtTransformer, c.IndexHelloWorld))
+	mux.HandleFunc("GET /", m.RequireAuth(jwtTransformer, ldap, c.IndexHelloWorld))
 	return mux
 }

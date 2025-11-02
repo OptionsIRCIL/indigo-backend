@@ -68,11 +68,7 @@ func (j *JwtTransformer) VendToken(user LdapUser) (string, error) {
 	return jwt.NewWithClaims(jwt.SigningMethodHS512, claims).SignedString(j.secret)
 }
 
-// ValidateToken takes signed token string and attempts to verify its signature and scan
-// its claims into an [LdapUser]. [jwt.WithValidMethods] is employed to ensure that the only
-// accepted method is HS512. iat and exp claims are also required. Does NOT verify that the token
-// iat is larger than the user's last password change time.
-func (j *JwtTransformer) ValidateToken(encodedToken string) (*LdapUser, error) {
+func (j *JwtTransformer) stringToToken(encodedToken string) (*claimSet, error) {
 	token, tokenErr := jwt.ParseWithClaims(
 		encodedToken,
 		&claimSet{},
@@ -96,11 +92,24 @@ func (j *JwtTransformer) ValidateToken(encodedToken string) (*LdapUser, error) {
 			Fatal: false,
 		}
 	}
+	return claims, nil
+}
+
+// ValidateToken takes signed token string and attempts to verify its signature and scan
+// its claims into an [LdapUser]. [jwt.WithValidMethods] is employed to ensure that the only
+// accepted method is HS512. iat and exp claims are also required. Does NOT verify that the token
+// iat is larger than the user's last password change time but rather returns it as the second
+// returned value.
+func (j *JwtTransformer) ValidateToken(encodedToken string) (*LdapUser, int64, error) {
+	claims, err := j.stringToToken(encodedToken)
+	if err != nil {
+		return nil, -1, err
+	}
 
 	return &LdapUser{
 		FirstName: claims.FirstName,
 		LastName:  claims.LastName,
 		Username:  claims.Subject,
 		Groups:    claims.Groups,
-	}, nil
+	}, claims.IssuedAt.Unix(), nil
 }

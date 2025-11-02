@@ -50,7 +50,7 @@ func ExampleJwtTransformer_ValidateToken() {
 	// Example has been placed in a global variable for brevity
 	exampleToken := signedExampleToken // eyJhbGciOiJIUzUx...
 
-	user, err := j.ValidateToken(exampleToken)
+	user, _, err := j.ValidateToken(exampleToken)
 
 	if err == nil {
 		fmt.Printf("Token verification succeeded! Username=%s\n", user.Username)
@@ -79,17 +79,17 @@ func TestJwtTransformer_ValidateToken(t *testing.T) {
 		t.Error("jWrongSecret.SetSecret failed unexpectedly")
 	}
 
-	_, err = jGoodSecret.ValidateToken(signedExampleToken)
+	_, _, err = jGoodSecret.ValidateToken(signedExampleToken)
 	if err != nil {
 		t.Error("jGoodSecret.ValidateToken failed unexpectedly")
 	}
 
-	_, err = jShortSecret.ValidateToken(signedExampleToken)
+	_, _, err = jShortSecret.ValidateToken(signedExampleToken)
 	if err == nil {
 		t.Error("jShortSecret.ValidateToken succeeded unexpectedly")
 	}
 
-	_, err = jWrongSecret.ValidateToken(signedExampleToken)
+	_, _, err = jWrongSecret.ValidateToken(signedExampleToken)
 	if err == nil {
 		t.Error("jWrongSecret.ValidateToken succeeded unexpectedly")
 	}

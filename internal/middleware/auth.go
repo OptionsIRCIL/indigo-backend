@@ -8,7 +8,7 @@ import (
 	"myoptions.info/indigo/backend/internal/util"
 )
 
-func RequireAuth(jwtTransformer *service.JwtTransformer, next http.HandlerFunc) http.HandlerFunc {
+func RequireAuth(jwtTransformer *service.JwtTransformer, l *service.LdapConnection, next http.HandlerFunc) http.HandlerFunc {
 	// Return a function wrapping the next handler
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Grab IndigoAuth cookie
@@ -19,13 +19,24 @@ func RequireAuth(jwtTransformer *service.JwtTransformer, next http.HandlerFunc) 
 		}
 
 		// Parse cookie
-		user, err := jwtTransformer.ValidateToken(cookies[0].Value)
+		user, iat, err := jwtTransformer.ValidateToken(cookies[0].Value)
 		if err != nil {
 			util.ThrowHttpStatus(w, 403)
 			return
 		}
 
-		// TODO: Verify iat > last password modification time
+		// Verify iat > last password modification time
+		lastModifiedTime, ldapErr := l.FetchPwdLastSet(user.Username)
+		if ldapErr != nil {
+			util.ThrowHttpUnhandled(w, ldapErr)
+			return
+		}
+		if iat < lastModifiedTime {
+			// More descriptive/useful error could probably be returned but idk
+			// For now, we'll just return a 401.
+			util.ThrowHttpStatus(w, 401)
+			return
+		}
 
 		// Add user to context and continue
 		ctx := context.WithValue(r.Context(), "user", user)
