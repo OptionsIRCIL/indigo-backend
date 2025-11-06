@@ -13,7 +13,7 @@ func ProvideOptions(methods []string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Add(
 			"Access-Control-Allow-Methods",
-			fmt.Sprintf("OPTIONS %s", strings.Join(methods, " ")),
+			fmt.Sprintf("OPTIONS %s", strings.Join(methods, ", ")),
 		)
 		w.WriteHeader(204)
 	}
