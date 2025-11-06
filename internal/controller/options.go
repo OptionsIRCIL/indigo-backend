@@ -6,6 +6,15 @@ import (
 	"strings"
 )
 
+// https://developer.mozilla.org/en-US/docs/Glossary/CORS-safelisted_request_header
+var corsSafelistedHeaders = []string{
+	"Accept",
+	"Accept-Language",
+	"Content-Language",
+	"Content-Type",
+	"Range",
+}
+
 // ProvideOptions responds to an arbitrary OPTIONS request with a list of CORS headers
 // detailing the methods and CORS requirements for the endpoint.
 func ProvideOptions(methods []string) http.HandlerFunc {
@@ -14,6 +23,10 @@ func ProvideOptions(methods []string) http.HandlerFunc {
 		w.Header().Add(
 			"Access-Control-Allow-Methods",
 			fmt.Sprintf("OPTIONS, %s", strings.Join(methods, ", ")),
+		)
+		w.Header().Add(
+			"Access-Control-Allow-Headers",
+			strings.Join(corsSafelistedHeaders, ", "),
 		)
 		w.WriteHeader(204)
 	}
