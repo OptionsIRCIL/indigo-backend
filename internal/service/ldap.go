@@ -89,6 +89,8 @@ func (c *LdapConnection) userByUsername(username string, attributes []string) (*
 	searchResult, searchErr := c.Connection.Search(searchRequest)
 	if searchErr != nil {
 		return nil, searchErr
+	} else if len(searchResult.Entries) == 0 {
+		return nil, &LdapError{"No entries returned by user query"}
 	} else if len(searchResult.Entries) != 1 {
 		return nil, &LdapError{"Multiple entries returned by user query"}
 	}
