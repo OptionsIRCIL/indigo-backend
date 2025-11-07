@@ -7,6 +7,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/go-ldap/ldap/v3"
 )
@@ -152,7 +153,7 @@ func (c *LdapConnection) FetchUser(username string) (*LdapUser, error) {
 		return nil, err
 	}
 
-	entry, searchErr := c.userByUsername(username, []string{"givenName", "sn", "memberOf", "cn"})
+	entry, searchErr := c.userByUsername(username, []string{"givenName", "sn", "memberOf", "userPrincipalName"})
 	if searchErr != nil {
 		return nil, searchErr
 	}
@@ -171,7 +172,7 @@ func (c *LdapConnection) FetchUser(username string) (*LdapUser, error) {
 
 	// Assemble user
 	return &LdapUser{
-		Username:  entry.GetAttributeValue("cn"),
+		Username:  strings.Split(entry.GetAttributeValue("userPrincipalName"), "@")[0],
 		FirstName: entry.GetAttributeValue("givenName"),
 		LastName:  entry.GetAttributeValue("sn"),
 		Groups:    groups,
