@@ -13,11 +13,11 @@ import (
 )
 
 type OrganizationController struct {
-	Repo        *repository.OrganizationRepository
+	Repo        *repository.BaseRepository[models.Organization]
 	SyncService *service.ExternalSyncService
 }
 
-func NewOrganizationController(repo *repository.OrganizationRepository, syncService *service.ExternalSyncService) *OrganizationController {
+func NewOrganizationController(repo *repository.BaseRepository[models.Organization], syncService *service.ExternalSyncService) *OrganizationController {
 	return &OrganizationController{
 		Repo:        repo,
 		SyncService: syncService,

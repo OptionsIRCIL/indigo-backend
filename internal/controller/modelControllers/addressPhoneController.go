@@ -14,11 +14,11 @@ import (
 
 // AddressPhoneController provides the HTTP handlers for AddressPhone operations.
 type AddressPhoneController struct {
-	Repo        *repository.AddressPhoneRepository
+	Repo        *repository.BaseRepository[models.AddressPhone]
 	SyncService *service.ExternalSyncService
 }
 
-func NewAddressPhoneController(repo *repository.AddressPhoneRepository, syncService *service.ExternalSyncService) *AddressPhoneController {
+func NewAddressPhoneController(repo *repository.BaseRepository[models.AddressPhone], syncService *service.ExternalSyncService) *AddressPhoneController {
 	return &AddressPhoneController{
 		Repo:        repo,
 		SyncService: syncService,

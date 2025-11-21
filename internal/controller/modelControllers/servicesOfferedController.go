@@ -13,11 +13,11 @@ import (
 )
 
 type ServicesOfferedController struct {
-	Repo        *repository.ServicesOfferedRepository
+	Repo        *repository.BaseRepository[models.ServicesOffered]
 	SyncService *service.ExternalSyncService
 }
 
-func NewServicesOfferedController(repo *repository.ServicesOfferedRepository, syncService *service.ExternalSyncService) *ServicesOfferedController {
+func NewServicesOfferedController(repo *repository.BaseRepository[models.ServicesOffered], syncService *service.ExternalSyncService) *ServicesOfferedController {
 	return &ServicesOfferedController{
 		Repo:        repo,
 		SyncService: syncService,

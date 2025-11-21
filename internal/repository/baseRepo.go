@@ -6,6 +6,11 @@ import (
 	"gorm.io/gorm"
 )
 
+// BaseModel sets required vars for repos
+type BaseModel interface {
+	getID() uint
+}
+
 // BaseRepository defines the generic CRUD operations for all models.
 // T is assigned as the pointer representing the models
 type BaseRepository[T any] struct {

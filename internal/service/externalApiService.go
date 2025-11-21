@@ -13,24 +13,23 @@ import (
 
 // ExternalSyncService handles all outbound communication to the external API.
 type ExternalSyncService struct {
-	Client *http.Client
-	// Config
-	API_BASE_URL   string
-	API_AUTH_TOKEN string
+	Client       *http.Client
+	ApiBaseUrl   string
+	ApiAuthToken string
 }
 
 // NewExternalSyncService initializes the service with an HTTP client.
 func NewExternalSyncService(baseURL, authToken string) *ExternalSyncService {
 	return &ExternalSyncService{
-		Client:         &http.Client{Timeout: 10 * time.Second},
-		API_BASE_URL:   baseURL,
-		API_AUTH_TOKEN: authToken,
+		Client:       &http.Client{Timeout: 10 * time.Second},
+		ApiBaseUrl:   baseURL,
+		ApiAuthToken: authToken,
 	}
 }
 
 // pushDataToExternalAPI handles the common HTTP request, headers, and error checking.
 func (s *ExternalSyncService) pushDataToExternalAPI(jsonData []byte, endpoint string) error {
-	url := s.API_BASE_URL + endpoint
+	url := s.ApiBaseUrl + endpoint
 	reqBody := bytes.NewReader(jsonData)
 
 	req, err := http.NewRequest(http.MethodPut, url, reqBody)
@@ -40,7 +39,7 @@ func (s *ExternalSyncService) pushDataToExternalAPI(jsonData []byte, endpoint st
 
 	// Set headers (Authentication and Content Type)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+s.API_AUTH_TOKEN)
+	req.Header.Set("Authorization", "Bearer "+s.ApiAuthToken)
 
 	resp, err := s.Client.Do(req)
 	if err != nil {

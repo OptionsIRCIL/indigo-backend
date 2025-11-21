@@ -13,11 +13,11 @@ import (
 )
 
 type PlaceController struct {
-	Repo        *repository.PlaceRepository
+	Repo        *repository.BaseRepository[models.Place]
 	SyncService *service.ExternalSyncService
 }
 
-func NewPlaceController(repo *repository.PlaceRepository, syncService *service.ExternalSyncService) *PlaceController {
+func NewPlaceController(repo *repository.BaseRepository[models.Place], syncService *service.ExternalSyncService) *PlaceController {
 	return &PlaceController{
 		Repo:        repo,
 		SyncService: syncService,

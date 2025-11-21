@@ -13,11 +13,11 @@ import (
 )
 
 type InformationAndReferralController struct {
-	Repo        *repository.InfoAndReferralRepository
+	Repo        *repository.BaseRepository[models.InformationAndReferral]
 	SyncService *service.ExternalSyncService
 }
 
-func NewInformationAndReferralController(repo *repository.InformationAndReferralRepository, syncService *service.ExternalSyncService) *InformationAndReferralController {
+func NewInformationAndReferralController(repo *repository.BaseRepository[models.InformationAndReferral], syncService *service.ExternalSyncService) *InformationAndReferralController {
 	return &InformationAndReferralController{
 		Repo:        repo,
 		SyncService: syncService,
