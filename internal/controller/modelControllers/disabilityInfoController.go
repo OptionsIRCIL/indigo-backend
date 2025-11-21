@@ -13,11 +13,11 @@ import (
 )
 
 type DisabilityInfoController struct {
-	Repo        *repository.DisabilityInfoRepository
+	Repo        *repository.BaseRepository[models.DisabilityInfo]
 	SyncService *service.ExternalSyncService
 }
 
-func NewDisabilityInfoController(repo *repository.DisabilityInfoRepository, syncService *service.ExternalSyncService) *DisabilityInfoController {
+func NewDisabilityInfoController(repo *repository.BaseRepository[models.DisabilityInfo], syncService *service.ExternalSyncService) *DisabilityInfoController {
 	return &DisabilityInfoController{
 		Repo:        repo,
 		SyncService: syncService,

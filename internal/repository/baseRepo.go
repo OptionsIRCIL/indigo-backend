@@ -1,10 +1,16 @@
 package repository
 
 import (
+	"errors"
 	"fmt"
 
 	"gorm.io/gorm"
 )
+
+// BaseModel sets required vars for repos
+type BaseModel interface {
+	getID() uint
+}
 
 // BaseRepository defines the generic CRUD operations for all models.
 // T is assigned as the pointer representing the models
@@ -33,7 +39,7 @@ func (r *BaseRepository[T]) Create(entity *T) error {
 func (r *BaseRepository[T]) GetByID(id uint, entity *T) error {
 	result := r.DB.First(entity, id)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return fmt.Errorf("record with ID %d not found", id)
 		}
 		return fmt.Errorf("failed to retrieve record by ID %d: %w", id, result.Error)
@@ -57,7 +63,7 @@ func (r *BaseRepository[T]) Delete(id uint) error {
 	var entity T
 	result := r.DB.Delete(&entity, id)
 	if result.Error != nil {
-		return fmt.Errorf("failed to delete record by ID %d: %w", result.Error)
+		return fmt.Errorf("failed to delete record by ID %d: %w", id, result.Error)
 	}
 	if result.RowsAffected == 0 {
 		return fmt.Errorf("record with ID %d not found for deletion", id)

@@ -13,11 +13,11 @@ import (
 )
 
 type PersonController struct {
-	Repo        *repository.PersonRepository
+	Repo        *repository.BaseRepository[models.Person]
 	SyncService *service.ExternalSyncService
 }
 
-func NewPersonController(repo *repository.PersonRepository, syncService *service.ExternalSyncService) *PersonController {
+func NewPersonController(repo *repository.BaseRepository[models.Person], syncService *service.ExternalSyncService) *PersonController {
 	return &PersonController{
 		Repo:        repo,
 		SyncService: syncService,

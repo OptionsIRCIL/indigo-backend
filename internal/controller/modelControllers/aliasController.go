@@ -14,11 +14,11 @@ import (
 
 // AliasController provides the HTTP handlers for Alias operations.
 type AliasController struct {
-	Repo        *repository.AliasRepository
+	Repo        *repository.BaseRepository[models.Alias]
 	SyncService *service.ExternalSyncService
 }
 
-func NewAliasController(repo *repository.AliasRepository, syncService *service.ExternalSyncService) *AliasController {
+func NewAliasController(repo *repository.BaseRepository[models.Alias], syncService *service.ExternalSyncService) *AliasController {
 	return &AliasController{
 		Repo:        repo,
 		SyncService: syncService,

@@ -13,11 +13,11 @@ import (
 )
 
 type GoalController struct {
-	Repo        *repository.GoalRepository
+	Repo        *repository.BaseRepository[models.Goal]
 	SyncService *service.ExternalSyncService
 }
 
-func NewGoalController(repo *repository.GoalRepository, syncService *service.ExternalSyncService) *GoalController {
+func NewGoalController(repo *repository.BaseRepository[models.Goal], syncService *service.ExternalSyncService) *GoalController {
 	return &GoalController{
 		Repo:        repo,
 		SyncService: syncService,

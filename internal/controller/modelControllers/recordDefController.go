@@ -13,11 +13,11 @@ import (
 )
 
 type RecordDefController struct {
-	Repo        *repository.RecordDefRepository
+	Repo        *repository.BaseRepository[models.RecordDef]
 	SyncService *service.ExternalSyncService
 }
 
-func NewRecordDefController(repo *repository.RecordDefRepository, syncService *service.ExternalSyncService) *RecordDefController {
+func NewRecordDefController(repo *repository.BaseRepository[models.RecordDef], syncService *service.ExternalSyncService) *RecordDefController {
 	return &RecordDefController{
 		Repo:        repo,
 		SyncService: syncService,

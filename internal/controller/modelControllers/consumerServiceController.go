@@ -13,11 +13,11 @@ import (
 )
 
 type ConsumerServiceController struct {
-	Repo        *repository.ConsumerServiceRepository
+	Repo        *repository.BaseRepository[models.ConsumerService]
 	SyncService *service.ExternalSyncService
 }
 
-func NewConsumerServiceController(repo *repository.ConsumerServiceRepository, syncService *service.ExternalSyncService) *ConsumerServiceController {
+func NewConsumerServiceController(repo *repository.BaseRepository[models.ConsumerService], syncService *service.ExternalSyncService) *ConsumerServiceController {
 	return &ConsumerServiceController{
 		Repo:        repo,
 		SyncService: syncService,

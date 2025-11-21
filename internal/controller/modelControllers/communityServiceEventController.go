@@ -13,11 +13,11 @@ import (
 )
 
 type CommunityServiceEventController struct {
-	Repo        *repository.CommunityServiceEventRepository
+	Repo        *repository.BaseRepository[models.CommunityServiceEvent]
 	SyncService *service.ExternalSyncService
 }
 
-func NewCommunityServiceEventController(repo *repository.CommunityServiceEventRepository, syncService *service.ExternalSyncService) *CommunityServiceEventController {
+func NewCommunityServiceEventController(repo *repository.BaseRepository[models.CommunityServiceEvent], syncService *service.ExternalSyncService) *CommunityServiceEventController {
 	return &CommunityServiceEventController{
 		Repo:        repo,
 		SyncService: syncService,
