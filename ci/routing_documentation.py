@@ -59,7 +59,7 @@ class ImplementedRouteIsDocumented(unittest.TestCase):
 
         # Dump routes and capture output
         self.implemented_routes = json.loads(subprocess.check_output(
-            args=f"{executable_location_absolute} -dump_routes 2>/dev/null",
+            args=f"{executable_location_absolute} -dump_routes",
             shell=True,
             text=True
         ))
