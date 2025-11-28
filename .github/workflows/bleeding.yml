@@ -73,6 +73,9 @@ jobs:
         with:
           name: "indigo"
 
+      - name: Set server executable
+        run: chmod +x indigo
+
       - name: Test route documentation
         env: 
           INDIGO_BACKEND_EXECUTABLE_LOCATION: "./indigo"
