@@ -50,7 +50,13 @@ func main() {
 	}
 
 	// Create routes
-	mux := c.CreateRoutes(config, &l, &jwtTransformer)
+	mux := c.CreateMux(
+		c.Services{
+			Config: config,
+			Ldap:   &l,
+			Jwt:    &jwtTransformer,
+		},
+	)
 
 	// Serve
 	log.Printf("Serving on :8080\n")

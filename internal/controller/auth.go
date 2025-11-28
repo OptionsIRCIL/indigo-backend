@@ -84,11 +84,33 @@ func AuthEntry(
 			Path:     "/",
 			MaxAge:   3600 * 10,
 			Secure:   config.IndigoEnv != "dev",
-			HttpOnly: config.IndigoEnv == "dev",
+			HttpOnly: false,
 			SameSite: sameSite,
 		})
 		w.WriteHeader(204)
 
 		log.Printf("Authentication attempt successful for user: %s", payload.Username)
+	}
+}
+
+func DeleteCookie(c *u.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		var sameSite http.SameSite
+		if c.IndigoEnv == "dev" {
+			sameSite = http.SameSiteNoneMode
+		} else {
+			sameSite = http.SameSiteStrictMode
+		}
+
+		http.SetCookie(w, &http.Cookie{
+			Name:     "IndigoAuth",
+			Value:    "",
+			Path:     "/",
+			MaxAge:   -1,
+			Secure:   c.IndigoEnv != "dev",
+			HttpOnly: false,
+			SameSite: sameSite,
+		})
+		w.WriteHeader(204)
 	}
 }

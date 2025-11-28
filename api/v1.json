@@ -64,6 +64,16 @@
             }
           }
         }
+      },
+      "delete": {
+        "summary": "/auth",
+        "security": [],
+        "description": "Drop the indigo-auth token via a Set-Cookie header",
+        "responses": {
+          "204": {
+            "description": "Set-Cookie header requesting indigo-auth timeout attached to request."
+          }
+        }
       }
     },
     "/": {
