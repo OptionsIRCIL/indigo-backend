@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -12,17 +13,28 @@ import s "myoptions.info/indigo/backend/internal/service"
 
 // registerRouterNode recursively registers a routerNode and its children to a mux.
 // It also adds an OPTIONS method to support CORS preflight requests.
-func (m *muxWrapper) registerRouterNode(node routerConfig, parentPath string) {
+func (m *MuxWrapper) registerRouterNode(node RouterConfig, parentPath string) {
 	// Concat the parent path with this node's path for fully-qualified path
-	path := parentPath + node.path
+	path := parentPath
+	if parentPath != "" {
+		if path[len(path)-1] == '/' && node.Path[0] == '/' {
+			path = path + node.Path[1:]
+		} else if path[len(path)-1] != '/' && node.Path[0] != '/' {
+			path = path + "/" + node.Path
+		} else {
+			path = path + node.Path
+		}
+	} else {
+		path = node.Path
+	}
 
 	// Register path to declared operations in router and collect list of methods
-	methods := make([]string, len(node.methods))
-	for i, operation := range node.methods {
-		methods[i] = operation.method
+	methods := make([]string, len(node.Methods))
+	for i, operation := range node.Methods {
+		methods[i] = operation.Method
 		m.mux.HandleFunc(
-			fmt.Sprintf("%s %s", operation.method, path),
-			operation.handler,
+			fmt.Sprintf("%s %s", operation.Method, path),
+			operation.Handler,
 		)
 	}
 
@@ -30,41 +42,41 @@ func (m *muxWrapper) registerRouterNode(node routerConfig, parentPath string) {
 	m.mux.HandleFunc(fmt.Sprintf("OPTIONS %s", path), c.ProvideOptions(methods))
 
 	// Register children
-	for _, child := range node.children {
+	for _, child := range node.Children {
 		m.registerRouterNode(child, path)
 	}
 }
 
 // Initialize begins adding the root route and its children to the mux.
-func (m *muxWrapper) Initialize() {
+func (m *MuxWrapper) Initialize() {
 	m.registerRouterNode(m.routes, "")
 }
 
 // CreateMux takes in a [Services] struct, and using the contained utilities, constructs an [http.ServeMux]
 // that aggregates the various handler functions used in the application.
-func CreateMux(services Services) *http.ServeMux {
-	mux := muxWrapper{
+func CreateMux(services Services) MuxWrapper {
+	mux := MuxWrapper{
 		mux:      http.NewServeMux(),
 		services: services,
-		routes: routerConfig{
-			path: "/api/v1",
-			methods: []methodConfig{
+		routes: RouterConfig{
+			Path: "/",
+			Methods: []methodConfig{
 				{
-					method:  "GET",
-					handler: middleware.RequireAuth(services.Jwt, services.Ldap, c.IndexHelloWorld),
+					Method:  "GET",
+					Handler: middleware.RequireAuth(services.Jwt, services.Ldap, c.IndexHelloWorld),
 				},
 			},
-			children: []routerConfig{
+			Children: []RouterConfig{
 				{
-					path: "/auth",
-					methods: []methodConfig{
+					Path: "/auth",
+					Methods: []methodConfig{
 						{
-							method:  "POST",
-							handler: c.AuthEntry(services.Config, services.Ldap, services.Jwt),
+							Method:  "POST",
+							Handler: c.AuthEntry(services.Config, services.Ldap, services.Jwt),
 						},
 						{
-							method:  "DELETE",
-							handler: c.DeleteCookie(services.Config),
+							Method:  "DELETE",
+							Handler: c.DeleteCookie(services.Config),
 						},
 					},
 				},
@@ -74,7 +86,19 @@ func CreateMux(services Services) *http.ServeMux {
 
 	mux.Initialize()
 
-	return mux.mux
+	return mux
+}
+
+// ListenAndServe wraps http.ListenAndServe.
+func (m *MuxWrapper) ListenAndServe(addr string) error {
+	return http.ListenAndServe(addr, m.mux)
+}
+
+// DumpRoutes dumps the routing config to JSON. Useful for verifying documentation
+// in CI jobs.
+func (m *MuxWrapper) DumpRoutes() string {
+	encoded, _ := json.MarshalIndent(m.routes, "", "  ")
+	return string(encoded)
 }
 
 // Services is an aggregation of various tools that will be made available during assembly
@@ -85,25 +109,30 @@ type Services struct {
 	Jwt    *s.JwtTransformer
 }
 
-// muxWrapper ideally wraps around an [http.ServeMux] to abstract away some common middleware or routes
+// MuxWrapper ideally wraps around an [http.ServeMux] to abstract away some common middleware or routes
 // such as logging, user authentication, or CORS headers.
-// TODO: fully wrap mux?
-type muxWrapper struct {
+type MuxWrapper struct {
 	mux      *http.ServeMux
 	services Services
-	routes   routerConfig
+	routes   RouterConfig
 }
 
-// methodConfig defines the behavior that a mux should follow for a method invoked on a given route.
+// methodConfig defines the behavior that a mux should follow for a Method invoked on a given route.
 type methodConfig struct {
-	method  string
-	handler http.HandlerFunc
+	Method  string
+	Handler http.HandlerFunc
 }
 
-// routerConfig defines each route added to the application.
+// MarshalJSON abstracts away a methodConfig to only return the method string
+// when being printed by the JSON marshaller.
+func (m *methodConfig) MarshalJSON() ([]byte, error) {
+	return []byte("\"" + m.Method + "\""), nil
+}
+
+// RouterConfig defines each route added to the application.
 // TODO: Middleware?
-type routerConfig struct {
-	path     string         // The path to assign methods to.
-	methods  []methodConfig // What to do for each available HTTP method.
-	children []routerConfig // Each child will inherit the parent's path.
+type RouterConfig struct {
+	Path     string         `json:"path"`               // The Path to assign methods to.
+	Methods  []methodConfig `json:"methods"`            // What to do for each available HTTP method.
+	Children []RouterConfig `json:"children,omitempty"` // Each child will inherit the parent's Path.
 }
