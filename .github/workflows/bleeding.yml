@@ -34,20 +34,11 @@ jobs:
     - name: Build server
       run: go build -v ./cmd/indigo
 
-    - name: Build API documentation
-      run: npx @redocly/cli@latest build-docs ./api/v1.json
-
     - uses: actions/upload-artifact@v4
       name: Upload server binary
       with:
         path: 'indigo'
         name: 'indigo'
-
-    - uses: actions/upload-artifact@v4
-      name: Upload API documentation
-      with:
-        path: 'redoc-static.html'
-        name: 'redoc-static.html'
 
   build_documentation:
     runs-on: ubuntu-latest
