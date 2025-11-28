@@ -77,7 +77,7 @@ jobs:
         run: chmod +x indigo
 
       - name: Install example env
-        run: copy .env.example .env
+        run: cp .env.example .env
 
       - name: Test route documentation
         env: 
