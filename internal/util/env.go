@@ -70,7 +70,8 @@ func envOrDefault(envKey string, defaultValue string) string {
 // LoadConfig loads all relevant environment variables into a [Config]. If any variables are found to be missing or
 // invalid, [log.Fatal] is called to terminate the application.
 func LoadConfig() *Config {
-	envErr := godotenv.Load()
+	//explicit local call for test
+	envErr := godotenv.Load(".env.local")
 	if envErr != nil {
 		log.Fatal(envErr)
 	}
