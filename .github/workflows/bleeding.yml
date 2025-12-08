@@ -17,7 +17,7 @@ jobs:
         id: parse
         run: echo "TAG=main_$(cut -c 1-7 <<< '${{ github.workflow_sha }}')" >> "$GITHUB_OUTPUT"
 
-  build:
+  build_server:
     runs-on: ubuntu-latest
     needs: tag
     steps:
@@ -31,14 +31,8 @@ jobs:
     - name: Set version to workflow SHA
       run: sed -i 's/Indigo CIL, v0\.0\.0/Indigo CIL, workflow ${{ needs.tag.outputs.tag }}/' ./cmd/indigo/main.go
 
-    - name: Run tests
-      run:  go test ./... -v
-
     - name: Build server
       run: go build -v ./cmd/indigo
-
-    - name: Build API documentation
-      run: npx @redocly/cli@latest build-docs ./api/v1.json
 
     - uses: actions/upload-artifact@v4
       name: Upload server binary
@@ -46,15 +40,70 @@ jobs:
         path: 'indigo'
         name: 'indigo'
 
+  build_documentation:
+    runs-on: ubuntu-latest
+    needs: tag
+    steps:
+    - uses: actions/checkout@v4
+      
+    - name: Set version to workflow SHA
+      run: jq '.info.version = "${{ needs.tag.outputs.tag }}"' ./api/v1.json > v1_tagged.json
+        
+    - name: Build API documentation
+      run: npx @redocly/cli@latest build-docs v1_tagged.json
+        
     - uses: actions/upload-artifact@v4
       name: Upload API documentation
       with:
         path: 'redoc-static.html'
         name: 'redoc-static.html'
 
+  test_server_unit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.25.1'
+
+    - name: Run tests
+      run:  go test ./... -v
+
+  test_documentation:
+    runs-on: ubuntu-latest
+    needs: build_server
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v6.1.0
+
+      - uses: actions/download-artifact@v4
+        name: Download server artifact
+        with:
+          name: "indigo"
+
+      - name: Set server executable
+        run: chmod +x indigo
+
+      - name: Install example env
+        run: cp .env.example .env
+
+      - name: Test route documentation
+        env: 
+          INDIGO_BACKEND_EXECUTABLE_LOCATION: "./indigo"
+          OPENAPI_SPEC_LOCATION: "./api/v1.json"
+        run: python3 ./ci/routing_documentation.py -v
+
   deploy:
     runs-on: self-hosted
-    needs: build
+    needs: 
+      - build_server
+      - build_documentation
+      - test_documentation
+      - test_server_unit
     if: ${{ github.event_name == 'push' }}
     steps:
       - uses: actions/download-artifact@v4

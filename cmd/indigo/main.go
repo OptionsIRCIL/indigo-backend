@@ -2,8 +2,10 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
-	"net/http"
+	"os"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -17,8 +19,26 @@ import (
 	"myoptions.info/indigo/backend/internal/util"
 )
 
+type runtimeFlags struct {
+	port       int
+	dumpRoutes bool
+}
+
+var flags = runtimeFlags{}
+
+func init() {
+	flag.IntVar(&flags.port, "port", 8080, "specifies the port the http server runs on")
+	flag.BoolVar(&flags.dumpRoutes, "dump_routes", false, "dump the configured routes to stdout and exit")
+	flag.Parse()
+}
+
 func main() {
 	log.Print("Indigo CIL, v0.0.0")
+
+	// Some flags may result in diagnostic data being dumped rather than
+	// the server fully starting up. These flags should not require a connection to the
+	// database or to LDAP.
+	delayConnection := flags.dumpRoutes
 
 	// Load environment
 	config := util.LoadConfig()
@@ -41,13 +61,15 @@ func main() {
 		config.LdapPassword,
 	)
 
-	// Initialize connection
-	err := l.Initialize()
-	if err != nil {
-		log.Fatal(err)
+	if !delayConnection {
+		// Initialize connection
+		err := l.Initialize()
+		if err != nil {
+			log.Fatal(err)
+		}
+		l.SetSecure(config.IndigoEnv == "prod")
+		defer l.Connection.Close()
 	}
-	l.SetSecure(config.IndigoEnv == "prod")
-	defer l.Connection.Close()
 
 	// Initialize JWT & secret
 	jwtTransformer := s.JwtTransformer{}
@@ -93,9 +115,20 @@ func main() {
 	_ = cntrl.NewControllers(repos, services)
 
 	// Create routes
-	mux := c.CreateRoutes(config, &l, &jwtTransformer)
+	mux := c.CreateMux(
+		c.Services{
+			Config: config,
+			Ldap:   &l,
+			Jwt:    &jwtTransformer,
+		},
+	)
+
+	if flags.dumpRoutes {
+		fmt.Println(mux.DumpRoutes())
+		os.Exit(0)
+	}
 
 	// Serve
-	log.Printf("Serving on :8080\n")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Printf("Serving on :%d\n", flags.port)
+	log.Fatal(mux.ListenAndServe(fmt.Sprintf(":%d", flags.port)))
 }
