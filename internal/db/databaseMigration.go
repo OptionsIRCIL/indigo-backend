@@ -13,18 +13,21 @@ func RunMigrations(db *gorm.DB) error {
 
 	// all models mapped to database
 	err := db.AutoMigrate(
-		&models.AddressPhone{},
-		&models.Alias{},
-		&models.CommunityServiceEvent{},
-		&models.ConsumerService{},
-		&models.DisabilityInfo{},
-		&models.Goal{},
-		&models.InformationAndReferral{},
+		// core/parents
 		&models.Organization{},
 		&models.Person{},
 		&models.Place{},
 		&models.RecordDef{},
+		//reference above entities
+		&models.Alias{},
+		&models.Goal{},
+		&models.ConsumerService{},
+		&models.InformationAndReferral{},
 		&models.ServicesOffered{},
+		&models.DisabilityInfo{},
+		//relies on others before migration possible
+		&models.AddressPhone{},
+		&models.CommunityServiceEvent{},
 	)
 
 	if err != nil {
