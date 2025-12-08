@@ -2,10 +2,12 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
-	"net/http"
+	"os"
 
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 
@@ -16,6 +18,17 @@ import (
 	s "myoptions.info/indigo/backend/internal/service"
 	"myoptions.info/indigo/backend/internal/util"
 )
+
+type runtimeFlags struct {
+	port int
+}
+
+var flags = runtimeFlags{}
+
+func init() {
+	flag.IntVar(&flags.port, "port", 8080, "specifies the port the http server runs on")
+	flag.Parse()
+}
 
 func main() {
 	log.Print("Indigo CIL, v0.0.0")
@@ -56,46 +69,52 @@ func main() {
 		log.Fatal(jwtInitErr)
 	}
 
-	//
-	dbFile := config.LdapUrl
-	if dbFile == "" {
-		dbFile = "indigo.db"
-		log.Printf("INFO: config.LdapUrl not set, defaulting to SQLite file: %s", dbFile)
-	}
+	// MARIADB DSN CONFIG
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		os.Getenv("DB_USER"),
+		os.Getenv("DB_PASSWORD"),
+		"127.0.0.1",
+		"3306",
+		"indigo_cil_dev",
+	)
 
-	// Configure GORM logger to be quiet for production, more detailed for development
+	// Configure GORM logger
 	newLogger := gormlogger.Default.LogMode(gormlogger.Silent)
 	if config.IndigoEnv == "dev" {
 		newLogger = gormlogger.Default.LogMode(gormlogger.Info)
 	}
 
-	gormDB, err := gorm.Open(sqlite.Open(dbFile), &gorm.Config{
+	// Connect to MariaDB
+	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
 		Logger: newLogger,
 	})
 	if err != nil {
-		log.Fatalf("FATAL: Could not connect to database (%s): %v", dbFile, err)
+		log.Fatalf("FATAL: Could not connect to MariaDB database: %v", err)
 	}
-	log.Printf("Successfully connected to database: %s", dbFile)
+	log.Printf("Successfully connected to MariaDB: %s", "indigo_cil_dev")
 
-	// run actual migrations
+	// Run migrations
 	if err := db.RunMigrations(gormDB); err != nil {
 		log.Fatalf("FATAL: Database migration failed: %v", err)
 	}
 
-	// Initialize Repos
+	// Initialize Repos, Services, Controllers
 	repos := repository.NewRepositories(gormDB)
-
-	// Initialize Services
 	services := s.NewServices(config.LdapUrl, config.IndigoEnv)
-
-	// Initialize Controllers
-	// blank "_" for now until I spend some time on where to initialize correctly.
+	// The blank identifier "_" is used to avoid the "declared and not used" error.
 	_ = cntrl.NewControllers(repos, services)
 
-	// Create routes
-	mux := c.CreateRoutes(config, &l, &jwtTransformer)
+	// Create routes using MuxWrapper
+	mux := c.CreateRoutes(
+		c.Services{
+			Config: config,
+			Ldap:   &l,
+			Jwt:    &jwtTransformer,
+		},
+	)
 
 	// Serve
-	log.Printf("Serving on :8080\n")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	log.Printf("Serving on :%d\n", flags.port)
+	log.Fatal(mux.ListenAndServe(fmt.Sprintf(":%d", flags.port)))
 }
