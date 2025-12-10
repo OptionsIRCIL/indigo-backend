@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 
 	"myoptions.info/indigo/backend/internal/middleware"
 	"myoptions.info/indigo/backend/internal/util"
@@ -96,11 +97,26 @@ func (m *MuxWrapper) ListenAndServe(addr string) error {
 }
 
 // ServeToSocket wraps http.Serve and creates a net.Listen listener under the unix network type.
-func (m *MuxWrapper) ServeToSocket(socket string) error {
+// Also sets the ownership of the socket with os.Chown using uid:gid. If an ownership change is
+// not desired, these can be set to -1 (flag default). Default permissions is 770.
+func (m *MuxWrapper) ServeToSocket(socket string, uid int, gid int) error {
 	listener, err := net.Listen("unix", socket)
 	if err != nil {
 		return err
 	}
+
+	// Set ownership, if applicable
+	err = os.Chown(socket, uid, gid)
+	if err != nil {
+		return err
+	}
+
+	// Allow rwx for owner and group, nothing for everyone else
+	err = os.Chmod(socket, 0770)
+	if err != nil {
+		return err
+	}
+
 	return http.Serve(listener, m.mux)
 }
 

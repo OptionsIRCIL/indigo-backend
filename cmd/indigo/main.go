@@ -15,6 +15,8 @@ import (
 type runtimeFlags struct {
 	port       int
 	socket     string
+	socketUid  int
+	socketGid  int
 	dumpRoutes bool
 }
 
@@ -23,6 +25,8 @@ var flags = runtimeFlags{}
 func init() {
 	flag.IntVar(&flags.port, "port", 8080, "specifies the port the http server runs on")
 	flag.StringVar(&flags.socket, "socket", "", "specifies a socket to listen on, takes priority over -port")
+	flag.IntVar(&flags.socketUid, "socket_uid", -1, "if desired, change the owning UID on the listening socket")
+	flag.IntVar(&flags.socketGid, "socket_gid", -1, "if desired, change the owning GID on the listening socket")
 	flag.BoolVar(&flags.dumpRoutes, "dump_routes", false, "dump the configured routes to stdout and exit")
 	flag.Parse()
 }
@@ -93,6 +97,6 @@ func main() {
 		log.Fatal(mux.ListenAndServe(fmt.Sprintf(":%d", flags.port)))
 	} else {
 		log.Printf("Serving on socket %s\n", flags.socket)
-		log.Fatal(mux.ServeToSocket(flags.socket))
+		log.Fatal(mux.ServeToSocket(flags.socket, flags.socketUid, flags.socketGid))
 	}
 }
