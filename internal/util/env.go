@@ -55,10 +55,8 @@ func envOrDefault(envKey string, defaultValue string) string {
 // LoadConfig loads all relevant environment variables into a [Config]. If any variables are found to be missing or
 // invalid, [log.Fatal] is called to terminate the application.
 func LoadConfig() *Config {
-	envErr := godotenv.Load()
-	if envErr != nil {
-		log.Fatal(envErr)
-	}
+	// Ignore .env load fail - User may want to specify only via typical environment vars
+	_ = godotenv.Load()
 
 	return &Config{
 		IndigoEnv:      envOrDefault("INDIGO_ENV", "dev"),

@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 
 	"myoptions.info/indigo/backend/internal/middleware"
@@ -92,6 +93,15 @@ func CreateMux(services Services) MuxWrapper {
 // ListenAndServe wraps http.ListenAndServe.
 func (m *MuxWrapper) ListenAndServe(addr string) error {
 	return http.ListenAndServe(addr, m.mux)
+}
+
+// ServeToSocket wraps http.Serve and creates a net.Listen listener under the unix network type.
+func (m *MuxWrapper) ServeToSocket(socket string) error {
+	listener, err := net.Listen("unix", socket)
+	if err != nil {
+		return err
+	}
+	return http.Serve(listener, m.mux)
 }
 
 // DumpRoutes dumps the routing config to JSON. Useful for verifying documentation
