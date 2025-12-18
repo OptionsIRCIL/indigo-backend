@@ -7,7 +7,13 @@ import (
 	"log"
 	"os"
 
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
+	gormlogger "gorm.io/gorm/logger"
 	c "myoptions.info/indigo/backend/internal/config"
+	cntrl "myoptions.info/indigo/backend/internal/controller"
+	"myoptions.info/indigo/backend/internal/db"
+	"myoptions.info/indigo/backend/internal/repository"
 	s "myoptions.info/indigo/backend/internal/service"
 	"myoptions.info/indigo/backend/internal/util"
 )
@@ -77,7 +83,7 @@ func main() {
 		log.Fatal(jwtInitErr)
 	}
 
-	// Create routes
+	// Create routes using MuxWrapper
 	mux := c.CreateMux(
 		c.Services{
 			Config: config,
@@ -90,6 +96,42 @@ func main() {
 		fmt.Println(mux.DumpRoutes())
 		os.Exit(0)
 	}
+
+	// MARIADB DSN CONFIG
+	dsn := fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		config.DbUser,
+		config.DbPassword,
+		"127.0.0.1",
+		"3306",
+		"indigo_cil_dev",
+	)
+
+	// Configure GORM logger
+	newLogger := gormlogger.Default.LogMode(gormlogger.Silent)
+	if config.IndigoEnv == "dev" {
+		newLogger = gormlogger.Default.LogMode(gormlogger.Info)
+	}
+
+	// Connect to MariaDB
+	gormDB, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		Logger: newLogger,
+	})
+	if err != nil {
+		log.Fatalf("FATAL: Could not connect to MariaDB database: %v", err)
+	}
+	log.Printf("Successfully connected to MariaDB: %s", "indigo_cil_dev")
+
+	// Run migrations
+	if err := db.RunMigrations(gormDB); err != nil {
+		log.Fatalf("FATAL: Database migration failed: %v", err)
+	}
+
+	// Initialize Repos, Services, Controllers
+	repos := repository.NewRepositories(gormDB)
+	services := s.NewServices(config.LdapUrl, config.IndigoEnv)
+	// The blank identifier "_" is used to avoid the "declared and not used" error.
+	_ = cntrl.NewControllers(repos, services)
 
 	// Serve
 	if flags.socket == "" {

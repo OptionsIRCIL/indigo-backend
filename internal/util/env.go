@@ -19,6 +19,18 @@ type Config struct {
 	// The HMAC256 secret to use for signing JWTs. Should be at least 32 characters.
 	IndigoSecret string
 
+	// MariaDB username
+	DbUser string
+
+	// MariaDB password
+	DbPassword string
+
+	// MariaDB host (e.g., 127.0.0.1)
+	DbHost string
+
+	// MariaDB port (e.g., 3306)
+	DbPort string
+
 	// The search base to use when fetching user details from LDAP.
 	LdapSearchBase string
 
@@ -34,6 +46,9 @@ type Config struct {
 
 	// The password of an LDAP service account with the ability to read domain user details.
 	LdapPassword string
+
+	// template database var
+	GormDb string
 }
 
 func requireEnv(envKey string) string {
@@ -59,8 +74,15 @@ func LoadConfig() *Config {
 	_ = godotenv.Load()
 
 	return &Config{
-		IndigoEnv:      envOrDefault("INDIGO_ENV", "dev"),
-		IndigoSecret:   requireEnv("INDIGO_SECRET"),
+		IndigoEnv:    envOrDefault("INDIGO_ENV", "dev"),
+		IndigoSecret: requireEnv("INDIGO_SECRET"),
+
+		DbUser:     requireEnv("DB_USER"),
+		DbPassword: envOrDefault("DB_PASSWORD", ""),      // Password blank on local setup
+		DbHost:     envOrDefault("DB_HOST", "127.0.0.1"), // Default to localhost
+		DbPort:     envOrDefault("DB_PORT", "3306"),      // Default to MariaDB standard port
+		GormDb:     requireEnv("GORM_DB"),
+
 		LdapSearchBase: requireEnv("LDAP_SEARCH_BASE"),
 		LdapDomain:     requireEnv("LDAP_DOMAIN"),
 		LdapUrl:        requireEnv("LDAP_URL"),
