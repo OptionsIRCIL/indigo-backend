@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
@@ -20,18 +19,31 @@ import (
 )
 
 type runtimeFlags struct {
-	port int
+	port       int
+	socket     string
+	socketUid  int
+	socketGid  int
+	dumpRoutes bool
 }
 
 var flags = runtimeFlags{}
 
 func init() {
 	flag.IntVar(&flags.port, "port", 8080, "specifies the port the http server runs on")
+	flag.StringVar(&flags.socket, "socket", "", "specifies a socket to listen on, takes priority over -port")
+	flag.IntVar(&flags.socketUid, "socket_uid", -1, "if desired, change the owning UID on the listening socket")
+	flag.IntVar(&flags.socketGid, "socket_gid", -1, "if desired, change the owning GID on the listening socket")
+	flag.BoolVar(&flags.dumpRoutes, "dump_routes", false, "dump the configured routes to stdout and exit")
 	flag.Parse()
 }
 
 func main() {
 	log.Print("Indigo CIL, v0.0.0")
+
+	// Some flags may result in diagnostic data being dumped rather than
+	// the server fully starting up. These flags should not require a connection to the
+	// database or to LDAP.
+	delayConnection := flags.dumpRoutes
 
 	// Load environment
 	config := util.LoadConfig()
@@ -54,13 +66,15 @@ func main() {
 		config.LdapPassword,
 	)
 
-	// Initialize connection
-	err := l.Initialize()
-	if err != nil {
-		log.Fatal(err)
+	if !delayConnection {
+		// Initialize connection
+		err := l.Initialize()
+		if err != nil {
+			log.Fatal(err)
+		}
+		l.SetSecure(config.IndigoEnv == "prod")
+		defer l.Connection.Close()
 	}
-	l.SetSecure(config.IndigoEnv == "prod")
-	defer l.Connection.Close()
 
 	// Initialize JWT & secret
 	jwtTransformer := s.JwtTransformer{}
@@ -114,7 +128,17 @@ func main() {
 		},
 	)
 
+	if flags.dumpRoutes {
+		fmt.Println(mux.DumpRoutes())
+		os.Exit(0)
+	}
+
 	// Serve
-	log.Printf("Serving on :%d\n", flags.port)
-	log.Fatal(mux.ListenAndServe(fmt.Sprintf(":%d", flags.port)))
+	if flags.socket == "" {
+		log.Printf("Serving on :%d\n", flags.port)
+		log.Fatal(mux.ListenAndServe(fmt.Sprintf(":%d", flags.port)))
+	} else {
+		log.Printf("Serving on socket %s\n", flags.socket)
+		log.Fatal(mux.ServeToSocket(flags.socket, flags.socketUid, flags.socketGid))
+	}
 }
