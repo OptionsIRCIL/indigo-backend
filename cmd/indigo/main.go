@@ -10,7 +10,6 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
-
 	c "myoptions.info/indigo/backend/internal/config"
 	cntrl "myoptions.info/indigo/backend/internal/controller"
 	"myoptions.info/indigo/backend/internal/db"
@@ -84,11 +83,25 @@ func main() {
 		log.Fatal(jwtInitErr)
 	}
 
+	// Create routes using MuxWrapper
+	mux := c.CreateMux(
+		c.Services{
+			Config: config,
+			Ldap:   &l,
+			Jwt:    &jwtTransformer,
+		},
+	)
+
+	if flags.dumpRoutes {
+		fmt.Println(mux.DumpRoutes())
+		os.Exit(0)
+	}
+
 	// MARIADB DSN CONFIG
 	dsn := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
+		config.DbUser,
+		config.DbPassword,
 		"127.0.0.1",
 		"3306",
 		"indigo_cil_dev",
@@ -119,20 +132,6 @@ func main() {
 	services := s.NewServices(config.LdapUrl, config.IndigoEnv)
 	// The blank identifier "_" is used to avoid the "declared and not used" error.
 	_ = cntrl.NewControllers(repos, services)
-
-	// Create routes using MuxWrapper
-	mux := c.CreateMux(
-		c.Services{
-			Config: config,
-			Ldap:   &l,
-			Jwt:    &jwtTransformer,
-		},
-	)
-
-	if flags.dumpRoutes {
-		fmt.Println(mux.DumpRoutes())
-		os.Exit(0)
-	}
 
 	// Serve
 	if flags.socket == "" {
