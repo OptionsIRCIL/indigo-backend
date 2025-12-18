@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
@@ -120,7 +121,7 @@ func main() {
 	_ = cntrl.NewControllers(repos, services)
 
 	// Create routes using MuxWrapper
-	mux := c.CreateRoutes(
+	mux := c.CreateMux(
 		c.Services{
 			Config: config,
 			Ldap:   &l,
