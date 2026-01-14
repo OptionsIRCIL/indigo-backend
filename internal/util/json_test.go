@@ -22,7 +22,7 @@ func ExampleDecodeJSONBody() {
 	w := httptest.NewRecorder()
 
 	item := inventoryItem{}
-	err := DecodeJSONBody(w, r, &item)
+	err := DecodeJsonBody(w, r, &item)
 
 	if err == nil {
 		fmt.Printf("Decode succeeded! Item=%s, Count=%d\n", item.Item, item.Count)

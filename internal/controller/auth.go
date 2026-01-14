@@ -27,12 +27,12 @@ func AuthEntry(
 		var payload UserCredentials
 
 		// Decode payload
-		decodeErr := u.DecodeJSONBody(w, r, &payload)
+		decodeErr := u.DecodeJsonBody(w, r, &payload)
 		if decodeErr != nil {
 			if decodeErr.Status > 499 {
 				u.ThrowHttpUnhandled(w, decodeErr)
 			} else {
-				// TODO: Anything that shouldn't be logged from DecodeJSONBody?
+				// TODO: Anything that shouldn't be logged from DecodeJsonBody?
 				u.ThrowHttpError(w, decodeErr.Status, decodeErr.Msg)
 			}
 			return
