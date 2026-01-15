@@ -13,7 +13,7 @@ import (
 func main() {
 	// Use a logger with no prefix for program startup
 	l := log.New(os.Stderr, "", 0)
-	l.Println("Indigo CIL, v0.0.0\n")
+	l.Println("Indigo CIL, v0.0.0")
 
 	// Check if valid subcommand exists
 	if len(os.Args) < 2 || !slices.Contains([]string{"serve", "dump_routes"}, os.Args[1]) {
@@ -32,8 +32,7 @@ Subcommands available:
   serve:
         Serves backend application on a port or Unix socket. View further options by passing the -help flag.
   dump_routes:
-        Dumps configured routes to stdout.
-`,
+        Dumps configured routes to stdout.`,
 		)
 	}
 

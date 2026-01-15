@@ -11,7 +11,7 @@ type inventoryItem struct {
 	Count int    `json:"count"`
 }
 
-func ExampleDecodeJSONBody() {
+func ExampleDecodeJsonBody() {
 	r := httptest.NewRequest(
 		"POST",
 		"http://example.com/api/v1/demo",
