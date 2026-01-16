@@ -11,7 +11,7 @@ type inventoryItem struct {
 	Count int    `json:"count"`
 }
 
-func ExampleDecodeJSONBody() {
+func ExampleDecodeJsonBody() {
 	r := httptest.NewRequest(
 		"POST",
 		"http://example.com/api/v1/demo",
@@ -22,7 +22,7 @@ func ExampleDecodeJSONBody() {
 	w := httptest.NewRecorder()
 
 	item := inventoryItem{}
-	err := DecodeJSONBody(w, r, &item)
+	err := DecodeJsonBody(w, r, &item)
 
 	if err == nil {
 		fmt.Printf("Decode succeeded! Item=%s, Count=%d\n", item.Item, item.Count)

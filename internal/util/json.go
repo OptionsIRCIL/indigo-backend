@@ -25,18 +25,18 @@ func (err *JsonDecodeFailed) Error() string {
 	return err.Msg
 }
 
-// DecodeJSONBody scans the contents of an [http.ResponseWriter]'s body into a given struct iff the Content-Type of the
+// DecodeJsonBody scans the contents of an [http.ResponseWriter]'s body into a given struct iff the Content-Type of the
 // body is application/json and the payload conforms to the struct. Adapted from an [Alex Edwards article] pertaining
 // to parsing JSON request bodies.
 //
 // [Alex Edwards article]: https://www.alexedwards.net/blog/how-to-properly-parse-a-json-request-body
-func DecodeJSONBody(w http.ResponseWriter, r *http.Request, target interface{}) *JsonDecodeFailed {
+func DecodeJsonBody(w http.ResponseWriter, r *http.Request, target interface{}) *JsonDecodeFailed {
 	// Require "application/json" content type
 	contentType := r.Header.Get("Content-Type")
 	contentTypeMatches, err := regexp.MatchString(`^application/json(?:$|;)`, strings.TrimSpace(strings.ToLower(contentType)))
 
 	if err != nil {
-		return &JsonDecodeFailed{500, "Invalid regexp in DecodeJSONBody"}
+		return &JsonDecodeFailed{500, "Invalid regexp in DecodeJsonBody"}
 	}
 	if !contentTypeMatches {
 		return &JsonDecodeFailed{422, "Invalid content type"}
