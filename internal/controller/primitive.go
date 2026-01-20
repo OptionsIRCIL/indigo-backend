@@ -6,10 +6,19 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"gorm.io/gorm"
 	"myoptions.info/indigo/backend/internal/util"
 )
+
+// A Primitive is one that is registered with GORM and has basic properties available for control.
+type Primitive struct {
+	Id        string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt time.Time
+}
 
 // A PrimitiveFailure is returned when a primitive controller fails in either a non-fatal fashion.
 type PrimitiveFailure struct {
@@ -46,7 +55,7 @@ func createUrlFormatExpr(urlFormat string) *regexp.Regexp {
 // PrimitiveGetOne creates an http.HandlerFunc that GETs a single entity by ID.
 // Format your urlFormat like this: `/path/to/my/:id:`, where `:id:` is an ID onto
 // the desired entity.
-func PrimitiveGetOne[Entity any](database *gorm.DB, urlFormat string) http.HandlerFunc {
+func PrimitiveGetOne[Entity Primitive](database *gorm.DB, urlFormat string) http.HandlerFunc {
 	idExpr := createUrlFormatExpr(urlFormat)
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -79,7 +88,7 @@ func PrimitiveGetOne[Entity any](database *gorm.DB, urlFormat string) http.Handl
 
 // PrimitiveGetCollection creates an http.HandlerFunc that GETs many entities based
 // upon filter criteria stored in query parameters.
-func PrimitiveGetCollection[E any](database gorm.DB) http.HandlerFunc {
+func PrimitiveGetCollection[E Primitive](database gorm.DB) http.HandlerFunc {
 	// TODO: Allowed properties for filtering?
 	// TODO: Query parameter parsing
 	// TODO: Database query
@@ -94,7 +103,7 @@ func PrimitiveGetCollection[E any](database gorm.DB) http.HandlerFunc {
 // PrimitivePost creates an http.HandlerFunc that accepts POST data containing
 // a JSON-serialized entity and stores it to the database. The stored entity,
 // including newly generated IDs, is echoed back in the response.
-func PrimitivePost[E any](database gorm.DB) http.HandlerFunc {
+func PrimitivePost[E Primitive](database gorm.DB) http.HandlerFunc {
 	// TODO: Validation (maybe method on struct?)
 	// TODO: Write the dang thing
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -108,7 +117,7 @@ func PrimitivePost[E any](database gorm.DB) http.HandlerFunc {
 // PrimitivePut acts similar to PrimitivePost, however, it overwrites
 // an existing entity rather than creating a new one. The updated entity
 // is echoed back in the response.
-func PrimitivePut[E any](database gorm.DB) http.HandlerFunc {
+func PrimitivePut[E Primitive](database gorm.DB) http.HandlerFunc {
 	// TODO: Implement
 	return func(w http.ResponseWriter, r *http.Request) {
 		util.ThrowHttpUnhandled(
@@ -120,7 +129,7 @@ func PrimitivePut[E any](database gorm.DB) http.HandlerFunc {
 
 // PrimitiveDelete deletes the entity from the database given an ID stored in the URL.
 // 204 is returned on successful deletion.
-func PrimitiveDelete[Entity any](database *gorm.DB, urlFormat string) http.HandlerFunc {
+func PrimitiveDelete[Entity Primitive](database *gorm.DB, urlFormat string) http.HandlerFunc {
 	idExpr := createUrlFormatExpr(urlFormat)
 
 	return func(w http.ResponseWriter, r *http.Request) {
