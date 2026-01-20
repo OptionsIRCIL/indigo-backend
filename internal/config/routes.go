@@ -74,7 +74,7 @@ func CreateMux(services Services) MuxWrapper {
 					Methods: []methodConfig{
 						{
 							Method:  "POST",
-							Handler: c.AuthEntry(services.Config, services.Ldap, services.Jwt),
+							Handler: c.AuthEntry(services.Config, services.Ldap, services.Jwt, services.Flags.AuthSameSite),
 						},
 						{
 							Method:  "DELETE",
@@ -133,6 +133,7 @@ type Services struct {
 	Config *util.Config
 	Ldap   *s.LdapConnection
 	Jwt    *s.JwtTransformer
+	Flags  util.ServeRuntimeFlags
 }
 
 // MuxWrapper ideally wraps around an [http.ServeMux] to abstract away some common middleware or routes
