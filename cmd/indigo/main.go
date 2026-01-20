@@ -45,6 +45,7 @@ Subcommands available:
 		set.StringVar(&flags.Socket, "socket", "", "specifies a socket to listen on, takes priority over -port")
 		set.IntVar(&flags.SocketUid, "socket_uid", -1, "if desired, change the owning UID on the listening socket")
 		set.IntVar(&flags.SocketGid, "socket_gid", -1, "if desired, change the owning GID on the listening socket")
+		set.BoolVar(&flags.AllowInsecureLdap, "allow_insecure_ldap", false, "allow insecure connections to LDAP")
 
 		if err := set.Parse(os.Args[2:]); err != nil {
 			l.Fatalf("Could not parse arguments: %s\n", err)

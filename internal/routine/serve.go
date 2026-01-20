@@ -13,10 +13,11 @@ import (
 )
 
 type ServeRuntimeFlags struct {
-	Port      int
-	Socket    string
-	SocketUid int
-	SocketGid int
+	Port              int
+	Socket            string
+	SocketUid         int
+	SocketGid         int
+	AllowInsecureLdap bool
 }
 
 // RunServe serves the application proper. Initializes all services and listens on either a port or a socket.
@@ -47,7 +48,7 @@ func RunServe(flags ServeRuntimeFlags) int {
 	if err != nil {
 		log.Fatal(err)
 	}
-	l.SetSecure(config.IndigoEnv == "prod")
+	l.SetSecure((config.IndigoEnv == "prod") && !flags.AllowInsecureLdap)
 	defer l.Connection.Close()
 
 	// Initialize JWT & secret
