@@ -50,16 +50,6 @@ func RunServe(flags util.ServeRuntimeFlags) int {
 		log.Fatal(jwtInitErr)
 	}
 
-	// Create routes using MuxWrapper
-	mux := c.CreateMux(
-		c.Services{
-			Config: config,
-			Ldap:   &l,
-			Jwt:    &jwtTransformer,
-			Flags:  flags,
-		},
-	)
-
 	// Configure GORM logger
 	newLogger := gormlogger.Default.LogMode(gormlogger.Silent)
 	if config.IndigoEnv == "dev" {
@@ -74,6 +64,17 @@ func RunServe(flags util.ServeRuntimeFlags) int {
 		log.Fatalf("FATAL: Could not connect to MariaDB database: %v", err)
 	}
 	log.Printf("Successfully connected to MariaDB: %s", "indigo_cil_dev")
+
+	// Create routes using MuxWrapper
+	mux := c.CreateMux(
+		c.Services{
+			Config: config,
+			Ldap:   &l,
+			Jwt:    &jwtTransformer,
+			Flags:  flags,
+			DB:     database,
+		},
+	)
 
 	// Run migrations
 	if err := util.RunMigrations(database); err != nil {
