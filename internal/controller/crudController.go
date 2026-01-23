@@ -25,7 +25,7 @@ func (gc *CrudController[T]) Create() http.HandlerFunc {
 
 func (gc *CrudController[T]) GetOne() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := r.PathValue("id") // Go 1.22+ feature
+		id := r.PathValue("id")
 		res, err := gc.Repo.GetByID(id)
 		if err != nil {
 			http.Error(w, "Not Found", 404)
