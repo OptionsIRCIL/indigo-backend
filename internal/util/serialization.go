@@ -45,9 +45,10 @@ func subtype(source interface{}, group string) reflect.Type {
 	return reflect.StructOf(fields)
 }
 
-func Deserialize(content io.Reader, target interface{}, group string) error {
+func Deserialize[K interface{}](content io.Reader, group string) (error, K) {
 	// Get proper type
 	var maskedType reflect.Type
+	var target K
 	if group == "-" {
 		maskedType = reflect.TypeOf(target)
 	} else {
@@ -59,7 +60,7 @@ func Deserialize(content io.Reader, target interface{}, group string) error {
 	decoder := json.NewDecoder(content)
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&masked); err != nil {
-		return err
+		return err, target
 	}
 
 	// Validate
@@ -67,9 +68,10 @@ func Deserialize(content io.Reader, target interface{}, group string) error {
 	validate := validator.New()
 	if err := validate.Struct(masked); err != nil {
 		fmt.Println(err)
-		return err
+		return err, target
 	}
 
 	// Copy into target
-	return copier.Copy(&target, masked)
+	err := copier.CopyWithOption(&target, masked, copier.Option{DeepCopy: true})
+	return err, target
 }
