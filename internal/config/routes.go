@@ -3,7 +3,9 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
+	"os"
 
 	"myoptions.info/indigo/backend/internal/middleware"
 	"myoptions.info/indigo/backend/internal/util"
@@ -72,7 +74,7 @@ func CreateMux(services Services) MuxWrapper {
 					Methods: []methodConfig{
 						{
 							Method:  "POST",
-							Handler: c.AuthEntry(services.Config, services.Ldap, services.Jwt),
+							Handler: c.AuthEntry(services.Config, services.Ldap, services.Jwt, services.Flags.AuthSameSite),
 						},
 						{
 							Method:  "DELETE",
@@ -94,6 +96,30 @@ func (m *MuxWrapper) ListenAndServe(addr string) error {
 	return http.ListenAndServe(addr, m.mux)
 }
 
+// ServeToSocket wraps http.Serve and creates a net.Listen listener under the unix network type.
+// Also sets the ownership of the socket with os.Chown using uid:gid. If an ownership change is
+// not desired, these can be set to -1 (flag default). Default permissions is 770.
+func (m *MuxWrapper) ServeToSocket(socket string, uid int, gid int) error {
+	listener, err := net.Listen("unix", socket)
+	if err != nil {
+		return err
+	}
+
+	// Set ownership, if applicable
+	err = os.Chown(socket, uid, gid)
+	if err != nil {
+		return err
+	}
+
+	// Allow rwx for owner and group, nothing for everyone else
+	err = os.Chmod(socket, 0770)
+	if err != nil {
+		return err
+	}
+
+	return http.Serve(listener, m.mux)
+}
+
 // DumpRoutes dumps the routing config to JSON. Useful for verifying documentation
 // in CI jobs.
 func (m *MuxWrapper) DumpRoutes() string {
@@ -107,6 +133,7 @@ type Services struct {
 	Config *util.Config
 	Ldap   *s.LdapConnection
 	Jwt    *s.JwtTransformer
+	Flags  util.ServeRuntimeFlags
 }
 
 // MuxWrapper ideally wraps around an [http.ServeMux] to abstract away some common middleware or routes

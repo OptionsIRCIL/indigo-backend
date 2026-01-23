@@ -29,6 +29,7 @@ var jpegContent = []byte(
 		"\x05\xff\xda\x00\x08\x01\x01\x00\x00\x3f\x00\xd2\xcf\x20\xff\xd9",
 )
 
+// TODO: Add more test cases
 func TestFilenameFilter(t *testing.T) {
 	// Valid input - typical file name
 	ext, passed := filenameValid("myphoto.png")

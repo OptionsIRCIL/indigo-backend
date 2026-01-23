@@ -22,17 +22,35 @@ func AuthEntry(
 	config *u.Config,
 	conn *service.LdapConnection,
 	transformer *service.JwtTransformer,
+	sameSite string,
 ) http.HandlerFunc {
+	// Determine SameSite value
+	var sameSiteHeader http.SameSite
+	if config.IndigoEnv == "dev" {
+		sameSiteHeader = http.SameSiteNoneMode
+	} else {
+		switch sameSite {
+		case "none":
+			sameSiteHeader = http.SameSiteNoneMode
+			break
+		case "lax":
+			sameSiteHeader = http.SameSiteLaxMode
+			break
+		default:
+			sameSiteHeader = http.SameSiteStrictMode
+		}
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		var payload UserCredentials
 
 		// Decode payload
-		decodeErr := u.DecodeJSONBody(w, r, &payload)
+		decodeErr := u.DecodeJsonBody(w, r, &payload)
 		if decodeErr != nil {
 			if decodeErr.Status > 499 {
 				u.ThrowHttpUnhandled(w, decodeErr)
 			} else {
-				// TODO: Anything that shouldn't be logged from DecodeJSONBody?
+				// TODO: Anything that shouldn't be logged from DecodeJsonBody?
 				u.ThrowHttpError(w, decodeErr.Status, decodeErr.Msg)
 			}
 			return
@@ -72,12 +90,6 @@ func AuthEntry(
 		}
 
 		// TODO: Set domain field in cookie when prod?
-		var sameSite http.SameSite
-		if config.IndigoEnv == "dev" {
-			sameSite = http.SameSiteNoneMode
-		} else {
-			sameSite = http.SameSiteStrictMode
-		}
 		http.SetCookie(w, &http.Cookie{
 			Name:     "IndigoAuth",
 			Value:    token,
@@ -85,7 +97,7 @@ func AuthEntry(
 			MaxAge:   3600 * 10,
 			Secure:   config.IndigoEnv != "dev",
 			HttpOnly: false,
-			SameSite: sameSite,
+			SameSite: sameSiteHeader,
 		})
 		w.WriteHeader(204)
 

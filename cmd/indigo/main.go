@@ -3,132 +3,59 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"os"
+	"slices"
 
-	"gorm.io/driver/sqlite"
-	"gorm.io/gorm"
-	gormlogger "gorm.io/gorm/logger"
-
-	c "myoptions.info/indigo/backend/internal/config"
-	cntrl "myoptions.info/indigo/backend/internal/controller"
-	"myoptions.info/indigo/backend/internal/db"
-	"myoptions.info/indigo/backend/internal/repository"
-	s "myoptions.info/indigo/backend/internal/service"
+	"myoptions.info/indigo/backend/internal/routine"
 	"myoptions.info/indigo/backend/internal/util"
 )
 
-type runtimeFlags struct {
-	port       int
-	dumpRoutes bool
-}
-
-var flags = runtimeFlags{}
-
-func init() {
-	flag.IntVar(&flags.port, "port", 8080, "specifies the port the http server runs on")
-	flag.BoolVar(&flags.dumpRoutes, "dump_routes", false, "dump the configured routes to stdout and exit")
-	flag.Parse()
-}
-
 func main() {
-	log.Print("Indigo CIL, v0.0.0")
+	// Use a logger with no prefix for program startup
+	l := log.New(os.Stderr, "", 0)
+	l.Println("Indigo CIL, v0.0.0")
 
-	// Some flags may result in diagnostic data being dumped rather than
-	// the server fully starting up. These flags should not require a connection to the
-	// database or to LDAP.
-	delayConnection := flags.dumpRoutes
+	// Check if valid subcommand exists
+	if len(os.Args) < 2 || !slices.Contains([]string{"serve", "dump_routes"}, os.Args[1]) {
+		// Drill down exact error to be a little more helpful
+		var preciseError string
+		if len(os.Args) < 2 {
+			preciseError = "Error: No subcommand supplied."
+		} else {
+			preciseError = "Error: Unknown subcommand."
+		}
 
-	// Load environment
-	config := util.LoadConfig()
-	log.Println("Initialized in environment", config.IndigoEnv)
-	if config.IndigoEnv == "dev" {
-		log.Println(
-			"WARNING! Running in development mode removes various safeguards and encryption features.",
-			"If you intend to deploy this software in a production environment, please use INDIGO_ENV=prod.",
+		l.Fatalln(
+			preciseError,
+			`
+Subcommands available:
+  serve:
+        Serves backend application on a port or Unix socket. View further options by passing the -help flag.
+  dump_routes:
+        Dumps configured routes to stdout.`,
 		)
 	}
 
-	// Populate LdapConnection
-	l := s.LdapConnection{
-		Base:   config.LdapSearchBase,
-		Domain: config.LdapDomain,
-	}
-	l.SetUrl(config.LdapUrl)
-	l.SetCredentials(
-		config.LdapUsername,
-		config.LdapPassword,
-	)
+	// Execute subcommand
+	switch os.Args[1] {
+	case "serve":
+		flags := util.ServeRuntimeFlags{}
+		set := flag.NewFlagSet("serve", flag.ExitOnError)
+		set.IntVar(&flags.Port, "port", 8080, "specifies the port the http server runs on")
+		set.StringVar(&flags.Socket, "socket", "", "specifies a socket to listen on, takes priority over -port")
+		set.IntVar(&flags.SocketUid, "socket_uid", -1, "if desired, change the owning UID on the listening socket")
+		set.IntVar(&flags.SocketGid, "socket_gid", -1, "if desired, change the owning GID on the listening socket")
+		set.BoolVar(&flags.AllowInsecureLdap, "allow_insecure_ldap", false, "allow insecure connections to LDAP")
+		set.StringVar(&flags.AuthSameSite, "auth_same_site", "", "configure the SameSite attribute of returned cookies")
 
-	if !delayConnection {
-		// Initialize connection
-		err := l.Initialize()
-		if err != nil {
-			log.Fatal(err)
+		if err := set.Parse(os.Args[2:]); err != nil {
+			l.Fatalf("Could not parse arguments: %s\n", err)
 		}
-		l.SetSecure(config.IndigoEnv == "prod")
-		defer l.Connection.Close()
+
+		os.Exit(routine.RunServe(flags))
+
+	case "dump_routes":
+		os.Exit(routine.RunDumpRoutes())
 	}
-
-	// Initialize JWT & secret
-	jwtTransformer := s.JwtTransformer{}
-	jwtInitErr := jwtTransformer.SetSecret([]byte(config.IndigoSecret))
-	if jwtInitErr != nil {
-		log.Fatal(jwtInitErr)
-	}
-
-	//
-	dbFile := config.LdapUrl
-	if dbFile == "" {
-		dbFile = "indigo.db"
-		log.Printf("INFO: config.LdapUrl not set, defaulting to SQLite file: %s", dbFile)
-	}
-
-	// Configure GORM logger to be quiet for production, more detailed for development
-	newLogger := gormlogger.Default.LogMode(gormlogger.Silent)
-	if config.IndigoEnv == "dev" {
-		newLogger = gormlogger.Default.LogMode(gormlogger.Info)
-	}
-
-	gormDB, err := gorm.Open(sqlite.Open(dbFile), &gorm.Config{
-		Logger: newLogger,
-	})
-	if err != nil {
-		log.Fatalf("FATAL: Could not connect to database (%s): %v", dbFile, err)
-	}
-	log.Printf("Successfully connected to database: %s", dbFile)
-
-	// run actual migrations
-	if err := db.RunMigrations(gormDB); err != nil {
-		log.Fatalf("FATAL: Database migration failed: %v", err)
-	}
-
-	// Initialize Repos
-	repos := repository.NewRepositories(gormDB)
-
-	// Initialize Services
-	services := s.NewServices(config.LdapUrl, config.IndigoEnv)
-
-	// Initialize Controllers
-	// blank "_" for now until I spend some time on where to initialize correctly.
-	_ = cntrl.NewControllers(repos, services)
-
-	// Create routes
-	mux := c.CreateMux(
-		c.Services{
-			Config: config,
-			Ldap:   &l,
-			Jwt:    &jwtTransformer,
-		},
-	)
-
-	if flags.dumpRoutes {
-		fmt.Println(mux.DumpRoutes())
-		os.Exit(0)
-	}
-
-	// Serve
-	log.Printf("Serving on :%d\n", flags.port)
-	log.Fatal(mux.ListenAndServe(fmt.Sprintf(":%d", flags.port)))
 }

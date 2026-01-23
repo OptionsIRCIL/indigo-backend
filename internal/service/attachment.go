@@ -67,8 +67,8 @@ func (a *AttachmentManager) SetAttachmentDirectory(dir string) error {
 // writes it to the local file system. id is used as the file name and the extension
 // is omitted from the destination file name.
 func (a *AttachmentManager) StoreFile(id string, name string, contents []byte) error {
-	extension, filenameValid := filenameValid(name)
-	if !filenameValid {
+	extension, valid := filenameValid(name)
+	if !valid {
 		return AttachmentError{"Filename invalid"}
 	}
 

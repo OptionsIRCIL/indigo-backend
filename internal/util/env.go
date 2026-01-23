@@ -19,6 +19,9 @@ type Config struct {
 	// The HMAC256 secret to use for signing JWTs. Should be at least 32 characters.
 	IndigoSecret string
 
+	// MariaDB connection details.
+	DatabaseDsn string
+
 	// The search base to use when fetching user details from LDAP.
 	LdapSearchBase string
 
@@ -55,14 +58,13 @@ func envOrDefault(envKey string, defaultValue string) string {
 // LoadConfig loads all relevant environment variables into a [Config]. If any variables are found to be missing or
 // invalid, [log.Fatal] is called to terminate the application.
 func LoadConfig() *Config {
-	envErr := godotenv.Load()
-	if envErr != nil {
-		log.Fatal(envErr)
-	}
+	// Ignore .env load fail - User may want to specify only via typical environment vars
+	_ = godotenv.Load()
 
 	return &Config{
 		IndigoEnv:      envOrDefault("INDIGO_ENV", "dev"),
 		IndigoSecret:   requireEnv("INDIGO_SECRET"),
+		DatabaseDsn:    requireEnv("DATABASE_DSN"),
 		LdapSearchBase: requireEnv("LDAP_SEARCH_BASE"),
 		LdapDomain:     requireEnv("LDAP_DOMAIN"),
 		LdapUrl:        requireEnv("LDAP_URL"),
