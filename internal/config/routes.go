@@ -7,11 +7,38 @@ import (
 	"net/http"
 	"os"
 
+	"gorm.io/gorm"
 	"myoptions.info/indigo/backend/internal/middleware"
 	"myoptions.info/indigo/backend/internal/util"
+	"myoptions.info/indigo/backend/model"
+	"myoptions.info/indigo/backend/model/entity"
 )
 import c "myoptions.info/indigo/backend/internal/controller"
 import s "myoptions.info/indigo/backend/internal/service"
+
+// generates a RouterConfig subtree for any entity provided as [T]
+func generateCRUDRoutes[T any](db *gorm.DB, path string) RouterConfig {
+	repo := &model.CrudRepository[T]{DB: db}
+	ctrl := &c.CrudController[T]{Repo: repo}
+
+	return RouterConfig{
+		Path: path,
+		Methods: []methodConfig{
+			{Method: "GET", Handler: ctrl.GetAll()},
+			{Method: "POST", Handler: ctrl.Create()},
+		},
+		Children: []RouterConfig{
+			{
+				Path: "/{id}",
+				Methods: []methodConfig{
+					{Method: "GET", Handler: ctrl.GetOne()},
+					{Method: "PUT", Handler: ctrl.Update()},
+					{Method: "DELETE", Handler: ctrl.Delete()},
+				},
+			},
+		},
+	}
+}
 
 // registerRouterNode recursively registers a routerNode and its children to a mux.
 // It also adds an OPTIONS method to support CORS preflight requests.
@@ -82,6 +109,20 @@ func CreateMux(services Services) MuxWrapper {
 						},
 					},
 				},
+				//ugly, will look into how to make this not a line spam
+				generateCRUDRoutes[entity.AddressPhone](services.DB, "/address-phone"),
+				generateCRUDRoutes[entity.Employee](services.DB, "/employee"),
+				generateCRUDRoutes[entity.Place](services.DB, "/place"),
+				generateCRUDRoutes[entity.Person](services.DB, "/person"),
+				generateCRUDRoutes[entity.Alias](services.DB, "/alias"),
+				generateCRUDRoutes[entity.CommunityServiceEvent](services.DB, "/community-service-event"),
+				generateCRUDRoutes[entity.ConsumerService](services.DB, "/consumer-service"),
+				generateCRUDRoutes[entity.DisabilityInfo](services.DB, "/disability-info"),
+				generateCRUDRoutes[entity.Goal](services.DB, "/goal"),
+				generateCRUDRoutes[entity.InformationAndReferral](services.DB, "/information-and-referral"),
+				generateCRUDRoutes[entity.Organization](services.DB, "/organization"),
+				generateCRUDRoutes[entity.RecordDef](services.DB, "/record-def"),
+				generateCRUDRoutes[entity.ServicesOffered](services.DB, "/services-offered"),
 			},
 		},
 	}
@@ -134,6 +175,7 @@ type Services struct {
 	Ldap   *s.LdapConnection
 	Jwt    *s.JwtTransformer
 	Flags  util.ServeRuntimeFlags
+	DB     *gorm.DB
 }
 
 // MuxWrapper ideally wraps around an [http.ServeMux] to abstract away some common middleware or routes
