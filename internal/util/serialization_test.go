@@ -8,13 +8,13 @@ import (
 
 type Student struct {
 	Ssn       string `json:"ssn"`
-	FirstName string `json:"firstName" groups:"post"`
-	LastName  string `json:"lastName" groups:"post"`
+	FirstName string `json:"firstName" groups:"post,get"`
+	LastName  string `json:"lastName" groups:"post,get"`
 }
 
 type Course struct {
 	Subject    string    `json:"subject" groups:"post"`
-	Number     string    `json:"number" groups:"post"` // This is named out of spite
+	Number     string    `json:"number" groups:"post"` // Cry about it
 	Name       string    `json:"name" groups:"post"`
 	Sections   []int     `json:"sections" groups:"post"`
 	EnrollCode string    `json:"enrollCode"`
@@ -119,4 +119,17 @@ func TestDeserialize(t *testing.T) {
 	if case4Error == nil {
 		t.Error("Deserialization unexpectedly succeeded for case 4")
 	}
+}
+
+func ExampleSerialize() {
+	student := Student{
+		Ssn:       "123123123",
+		FirstName: "Mercedes",
+		LastName:  "Benz",
+	}
+
+	serializedStudent, _ := Serialize(student, "get")
+	fmt.Println(string(serializedStudent))
+
+	// output: {"firstName":"Mercedes","lastName":"Benz"}
 }
