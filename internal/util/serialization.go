@@ -2,7 +2,6 @@ package util
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"reflect"
 	"slices"
@@ -20,8 +19,17 @@ func (s *SerializationError) Error() string {
 	return s.Msg
 }
 
-func subtype(source interface{}, group string) reflect.Type {
-	t := reflect.TypeOf(source)
+func subtype(t reflect.Type, group string) reflect.Type {
+	// If the passed item is a slice, we need to unwrap it to get the contained type.
+	if t.Kind() == reflect.Slice {
+		return reflect.SliceOf(subtype(t.Elem(), group))
+	}
+
+	// We can only support if the slice is a struct type.
+	if t.Kind() != reflect.Struct {
+		return t
+	}
+
 	var fields []reflect.StructField
 
 	// Extract any fields holding the desired group
@@ -29,19 +37,21 @@ func subtype(source interface{}, group string) reflect.Type {
 		field := t.Field(i)
 		tag, present := field.Tag.Lookup("groups")
 		if present {
-			if slices.Contains(strings.Split(tag, ","), group) {
+			props := strings.Split(tag, ",")
+			if slices.Contains(props, group) {
+				// Recursively subtype the property
+				field.Type = subtype(field.Type, group)
+
 				fields = append(fields, field)
 			}
 		}
 	}
-	// TODO: Cascade?
 
 	// Ensure the array exists
 	if fields == nil {
 		return t
 	}
 
-	// Create new struct
 	return reflect.StructOf(fields)
 }
 
@@ -52,7 +62,7 @@ func Deserialize[K interface{}](content io.Reader, group string) (error, K) {
 	if group == "-" {
 		maskedType = reflect.TypeOf(target)
 	} else {
-		maskedType = subtype(target, group)
+		maskedType = subtype(reflect.TypeOf(target), group)
 	}
 	masked := reflect.New(maskedType).Interface()
 
@@ -67,7 +77,6 @@ func Deserialize[K interface{}](content io.Reader, group string) (error, K) {
 	// TODO: Explore options, Utilize caching by building onto struct?
 	validate := validator.New()
 	if err := validate.Struct(masked); err != nil {
-		fmt.Println(err)
 		return err, target
 	}
 
