@@ -3,44 +3,120 @@ package util
 import (
 	"fmt"
 	"strings"
+	"testing"
 )
 
 type Student struct {
-	Ssn             string `json:"ssn"`
-	FirstName       string `json:"firstName" groups:"post"`
-	LastName        string `json:"lastName" groups:"post"`
-	FavoriteNumbers []int  `json:"favoriteNumbers" groups:"post"`
+	Ssn       string `json:"ssn"`
+	FirstName string `json:"firstName" groups:"post"`
+	LastName  string `json:"lastName" groups:"post"`
 }
 
 type Course struct {
-	Subject          string    `json:"subject" groups:"post"`
-	Number           string    `json:"number" groups:"post"` // This is named out of spite
-	Name             string    `json:"name" groups:"post"`
-	SuperDuperSecret string    `json:"superDuperSecret"`
-	Students         []Student `json:"students" groups:"post"`
+	Subject    string    `json:"subject" groups:"post"`
+	Number     string    `json:"number" groups:"post"` // This is named out of spite
+	Name       string    `json:"name" groups:"post"`
+	Sections   []int     `json:"sections" groups:"post"`
+	EnrollCode string    `json:"enrollCode"`
+	Students   []Student `json:"students" groups:"post"`
 }
 
 func ExampleDeserialize() {
-	courseData := strings.NewReader(`{
-	"subject": "CSCI",
-	"number": "261",
-	"name": "Introduction to Google Docs",
-	"students": [
-		{
-			"firstName": "Carl",
-			"lastName": "Weezer",
-            "favoriteNumbers": [1, 2, 3]
-		},
-		{
+	goodStudentData := strings.NewReader(`{ "firstName": "Jimmy", "lastName": "Neutron" }`)
+	badStudentData := strings.NewReader(`{ "firstName": "Carl", "lastName": "Wheezer", "ssn": "123123123" }`)
+
+	goodErr, goodStudent := Deserialize[Student](goodStudentData, "post")
+	badErr, badStudent := Deserialize[Student](badStudentData, "post")
+
+	if goodErr == nil {
+		fmt.Printf("goodStudent Successfully Deserialized! Data: %s\n", goodStudent)
+	} else {
+		fmt.Printf("goodStudent Failed Deserialization. Error: %s\n", goodErr)
+	}
+
+	if badErr == nil {
+		fmt.Printf("badStudent Successfully Deserialized! Data: %s\n", badStudent)
+	} else {
+		fmt.Printf("badStudent Failed Deserialization. Error: %s\n", badErr)
+	}
+
+	// output:
+	// goodStudent Successfully Deserialized! Data: { Jimmy Neutron}
+	// badStudent Failed Deserialization. Error: json: unknown field "ssn"
+}
+
+func TestDeserialize(t *testing.T) {
+	// Case 1 - Basic struct
+	case1Error, _ := Deserialize[Student](
+		strings.NewReader(`{
 			"firstName": "Jimmy",
 			"lastName": "Neutron"
-		}
-	]
-}`)
-	err, deserializedCourse := Deserialize[Course](courseData, "post")
-	if err != nil {
-		fmt.Println(err)
+		}`),
+		"post",
+	)
+	if case1Error != nil {
+		t.Error("Deserialization unexpectedly failed for case 1")
 	}
-	fmt.Println(deserializedCourse)
-	// output: {CSCI 261 Introduction to Google Docs }
+
+	// Case 2 - Basic struct, but masked property passed
+	case2Error, _ := Deserialize[Course](
+		strings.NewReader(`{
+			"firstName": "Jimmy",
+			"lastName": "Neutron",
+			"ssn": "123123123"
+		}`),
+		"post",
+	)
+	if case2Error == nil {
+		t.Error("Deserialization unexpectedly succeeded for case 2")
+	}
+
+	// Case 3 - Complex struct
+	case3Error, _ := Deserialize[Course](
+		strings.NewReader(`{
+			"subject": "CSCI",
+			"number": "261",
+			"name": "Introduction to Google Docs",
+			"students": [
+				{
+					"firstName": "Carl",
+					"lastName": "Wheezer"
+				},
+				{
+					"firstName": "Jimmy",
+					"lastName": "Neutron"
+				}
+			],
+			"sections": [123, 456, 789]
+		}`),
+		"post",
+	)
+	if case3Error != nil {
+		t.Error("Deserialization unexpectedly failed for case 3")
+	}
+
+	// Case 4 - Complex struct, bad nested property
+	case4Error, _ := Deserialize[Course](
+		strings.NewReader(`{
+			"subject": "CSCI",
+			"number": "261",
+			"name": "Introduction to Google Docs",
+			"students": [
+				{
+					"firstName": "Carl",
+					"lastName": "Wheezer"
+				},
+				{
+					"firstName": "Jimmy",
+					"lastName": "Neutron",
+					"ssn": "123123123"
+				}
+			],
+			"sections": [123, 456, 789]
+		}`),
+		"post",
+	)
+	if case4Error == nil {
+		t.Error("Deserialization unexpectedly succeeded for case 4")
+	}
 }

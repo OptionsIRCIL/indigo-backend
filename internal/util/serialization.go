@@ -55,10 +55,14 @@ func subtype(t reflect.Type, group string) reflect.Type {
 	return reflect.StructOf(fields)
 }
 
+// Deserialize takes JSON data from an io.Reader and transforms it into a type K. During this process,
+// it utilizes the "groups" tag to optionally filter out disallowed properties and uses the validate
+// library to validate all properties.
 func Deserialize[K interface{}](content io.Reader, group string) (error, K) {
+	var target K
+
 	// Get proper type
 	var maskedType reflect.Type
-	var target K
 	if group == "-" {
 		maskedType = reflect.TypeOf(target)
 	} else {
