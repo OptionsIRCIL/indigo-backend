@@ -29,8 +29,6 @@ func (p *PrimitiveFailure) Error() string {
 }
 
 // PrimitiveGetOne creates an http.HandlerFunc that GETs a single entity by ID.
-// Format your urlFormat like this: `/path/to/my/:id:`, where `:id:` is an ID onto
-// the desired entity.
 func PrimitiveGetOne[Entity Primitive](database *gorm.DB, urlFormat string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Open context at start of function
