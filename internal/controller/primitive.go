@@ -2,10 +2,7 @@ package controller
 
 import (
 	"context"
-	"log"
 	"net/http"
-	"regexp"
-	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -31,40 +28,17 @@ func (p *PrimitiveFailure) Error() string {
 	return p.Msg
 }
 
-func createUrlFormatExpr(urlFormat string) *regexp.Regexp {
-	// TODO: Cap to EOL?
-	// TODO: Support composite keys?
-	// TODO: Expand to support multiple identifying columns, identifiers other than UUID
-	// TODO: Unit tests
-	idExpr, exprErr := regexp.Compile(
-		"^" + strings.Replace(
-			urlFormat,
-			":id:",
-			"([0-9a-fA-F]{8}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{4}\\b-[0-9a-fA-F]{12})",
-			1,
-		),
-	)
-
-	if exprErr != nil {
-		log.Fatal(exprErr)
-	}
-
-	return idExpr
-}
-
 // PrimitiveGetOne creates an http.HandlerFunc that GETs a single entity by ID.
 // Format your urlFormat like this: `/path/to/my/:id:`, where `:id:` is an ID onto
 // the desired entity.
 func PrimitiveGetOne[Entity Primitive](database *gorm.DB, urlFormat string) http.HandlerFunc {
-	idExpr := createUrlFormatExpr(urlFormat)
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Open context at start of function
 		// TODO: Research context more to see if this is bad practice
 		ctx := context.Background()
 
 		// Pull ID
-		id := idExpr.FindString(r.URL.Path)
+		id := r.PathValue("id")
 		if id == "" {
 			util.ThrowHttpStatus(w, 404)
 			return
@@ -130,15 +104,13 @@ func PrimitivePut[E Primitive](database gorm.DB) http.HandlerFunc {
 // PrimitiveDelete deletes the entity from the database given an ID stored in the URL.
 // 204 is returned on successful deletion.
 func PrimitiveDelete[Entity Primitive](database *gorm.DB, urlFormat string) http.HandlerFunc {
-	idExpr := createUrlFormatExpr(urlFormat)
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Open context at start of function
 		// TODO: Research context more to see if this is bad practice
 		ctx := context.Background()
 
 		// Pull ID
-		id := idExpr.FindString(r.URL.Path)
+		id := r.PathValue("id")
 		if id == "" {
 			util.ThrowHttpStatus(w, 404)
 			return
