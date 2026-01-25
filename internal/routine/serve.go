@@ -72,7 +72,7 @@ func RunServe(flags util.ServeRuntimeFlags) int {
 			Ldap:   &l,
 			Jwt:    &jwtTransformer,
 			Flags:  flags,
-			DB:     database,
+			Db:     database,
 		},
 	)
 

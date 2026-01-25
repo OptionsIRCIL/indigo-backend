@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 	"myoptions.info/indigo/backend/internal/middleware"
 	"myoptions.info/indigo/backend/internal/util"
-	"myoptions.info/indigo/backend/model"
 	"myoptions.info/indigo/backend/model/entity"
 )
 import c "myoptions.info/indigo/backend/internal/controller"
@@ -110,19 +109,18 @@ func CreateMux(services Services) MuxWrapper {
 					},
 				},
 				//ugly, will look into how to make this not a line spam
-				generateCRUDRoutes[entity.AddressPhone](services.DB, "/address-phone"),
-				generateCRUDRoutes[entity.Employee](services.DB, "/employee"),
-				generateCRUDRoutes[entity.Place](services.DB, "/place"),
-				generateCRUDRoutes[entity.Person](services.DB, "/person"),
-				generateCRUDRoutes[entity.Alias](services.DB, "/alias"),
-				generateCRUDRoutes[entity.CommunityServiceEvent](services.DB, "/community-service-event"),
-				generateCRUDRoutes[entity.ConsumerService](services.DB, "/consumer-service"),
-				generateCRUDRoutes[entity.DisabilityInfo](services.DB, "/disability-info"),
-				generateCRUDRoutes[entity.Goal](services.DB, "/goal"),
-				generateCRUDRoutes[entity.InformationAndReferral](services.DB, "/information-and-referral"),
-				generateCRUDRoutes[entity.Organization](services.DB, "/organization"),
-				generateCRUDRoutes[entity.RecordDef](services.DB, "/record-def"),
-				generateCRUDRoutes[entity.ServicesOffered](services.DB, "/services-offered"),
+				generateCRUDRoutes[entity.AddressPhone](services.Db, "/address-phone"),
+				generateCRUDRoutes[entity.Employee](services.Db, "/employee"),
+				generateCRUDRoutes[entity.Person](services.Db, "/person"),
+				generateCRUDRoutes[entity.Alias](services.Db, "/alias"),
+				generateCRUDRoutes[entity.CommunityServiceEvent](services.Db, "/community-service-event"),
+				generateCRUDRoutes[entity.ConsumerService](services.Db, "/consumer-service"),
+				generateCRUDRoutes[entity.DisabilityInfo](services.Db, "/disability-info"),
+				generateCRUDRoutes[entity.Goal](services.Db, "/goal"),
+				generateCRUDRoutes[entity.InformationAndReferral](services.Db, "/information-and-referral"),
+				generateCRUDRoutes[entity.Organization](services.Db, "/organization"),
+				generateCRUDRoutes[entity.RecordDef](services.Db, "/record-def"),
+				generateCRUDRoutes[entity.ServicesOffered](services.Db, "/services-offered"),
 			},
 		},
 	}
@@ -175,7 +173,7 @@ type Services struct {
 	Ldap   *s.LdapConnection
 	Jwt    *s.JwtTransformer
 	Flags  util.ServeRuntimeFlags
-	DB     *gorm.DB
+	Db     *gorm.DB
 }
 
 // MuxWrapper ideally wraps around an [http.ServeMux] to abstract away some common middleware or routes
