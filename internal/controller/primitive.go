@@ -75,14 +75,25 @@ func PrimitiveGetCollection[E Primitive](database gorm.DB) http.HandlerFunc {
 // PrimitivePost creates an http.HandlerFunc that accepts POST data containing
 // a JSON-serialized entity and stores it to the database. The stored entity,
 // including newly generated IDs, is echoed back in the response.
-func PrimitivePost[E Primitive](database gorm.DB) http.HandlerFunc {
-	// TODO: Validation (maybe method on struct?)
-	// TODO: Write the dang thing
+func PrimitivePost[Entity Primitive](database *gorm.DB, group string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		util.ThrowHttpUnhandled(
-			w,
-			&PrimitiveFailure{Msg: "POST method not yet implemented"},
-		)
+		ctx := context.Background()
+
+		deserializationErr, entity := util.Deserialize[Entity](r.Body, group)
+		if deserializationErr != nil {
+			util.ThrowHttpError(w, 422, "Could not deserialize POST body")
+			return
+		}
+
+		// TODO ID generation
+		createErr := gorm.G[Entity](database).Create(ctx, &entity)
+		if createErr != nil {
+			util.ThrowHttpUnhandled(w, createErr)
+			return
+		}
+
+		util.ReturnSerialized(w, 201, entity)
+
 	}
 }
 
