@@ -12,15 +12,8 @@ import (
 	"myoptions.info/indigo/backend/internal/util"
 )
 
-type ServeRuntimeFlags struct {
-	Port      int
-	Socket    string
-	SocketUid int
-	SocketGid int
-}
-
 // RunServe serves the application proper. Initializes all services and listens on either a port or a socket.
-func RunServe(flags ServeRuntimeFlags) int {
+func RunServe(flags util.ServeRuntimeFlags) int {
 	// Load environment
 	config := util.LoadConfig()
 	log.Println("Initialized in environment", config.IndigoEnv)
@@ -47,7 +40,7 @@ func RunServe(flags ServeRuntimeFlags) int {
 	if err != nil {
 		log.Fatal(err)
 	}
-	l.SetSecure(config.IndigoEnv == "prod")
+	l.SetSecure((config.IndigoEnv == "prod") && !flags.AllowInsecureLdap)
 	defer l.Connection.Close()
 
 	// Initialize JWT & secret
@@ -63,6 +56,7 @@ func RunServe(flags ServeRuntimeFlags) int {
 			Config: config,
 			Ldap:   &l,
 			Jwt:    &jwtTransformer,
+			Flags:  flags,
 		},
 	)
 

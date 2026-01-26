@@ -6,7 +6,7 @@ type AddressPhone struct {
 	Type        string `gorm:"column:type;size:50;not null" json:"type"`
 
 	PlaceId  uint  `gorm:"column:placeId;not null" json:"placeId"`
-	Place    Place `gorm:"foreignKey:PlaceID" json:"-"`
+	Place    Place `gorm:"foreignKey:PlaceId" json:"-"`
 	PersonId uint  `gorm:"column:personId;not null" json:"personId"`
 
 	ServicesOffered []ServicesOffered `gorm:"foreignKey:AddressPhoneId" json:"-"`
