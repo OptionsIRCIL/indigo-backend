@@ -13,10 +13,12 @@ import (
 )
 
 func Entry(l *log.Logger) {
-	l.Println(`
-~~ WARNING! ~~
-This is a development build. Production use is heavily discouraged.
-`)
+	l.Println(
+		"",
+		"~~ WARNING! ~~",
+		"This is a development build. Production use is heavily discouraged.",
+		"",
+	)
 
 	// Check if valid subcommand exists
 	if len(os.Args) < 2 || !slices.Contains([]string{"serve", "dump_routes"}, os.Args[1]) {
