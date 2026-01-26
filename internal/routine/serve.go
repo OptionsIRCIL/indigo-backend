@@ -13,16 +13,10 @@ import (
 )
 
 // RunServe serves the application proper. Initializes all services and listens on either a port or a socket.
-func RunServe(flags util.ServeRuntimeFlags) int {
+func RunServe(env string, flags util.ServeRuntimeFlags) int {
 	// Load environment
-	config := util.LoadConfig()
-	log.Println("Initialized in environment", config.IndigoEnv)
-	if config.IndigoEnv == "dev" {
-		log.Println(
-			"WARNING! Running in development mode removes various safeguards and encryption features.",
-			"If you intend to deploy this software in a production environment, please use INDIGO_ENV=prod.",
-		)
-	}
+	config := util.LoadConfig(env)
+	log.Println("Environment initialized")
 
 	// Populate LdapConnection
 	l := s.LdapConnection{

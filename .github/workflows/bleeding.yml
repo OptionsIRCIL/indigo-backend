@@ -46,11 +46,20 @@ jobs:
     - name: Set version to workflow SHA
       run: sed -i 's/Indigo CIL, v0\.0\.0/Indigo CIL, workflow ${{ needs.tag.outputs.tag }}/' ./cmd/indigo/main.go
 
-    - name: Build server
-      run: go build -v ./cmd/indigo
+    - name: Build server (Development)
+      run: go build -v -o ./indigo_devel ./cmd/indigo
+
+    - name: Build server (Production)
+      run: go build -tags prod -v ./cmd/indigo
 
     - uses: actions/upload-artifact@v4
-      name: Upload server binary
+      name: Upload development binary
+      with:
+        path: 'indigo_devel'
+        name: 'indigo_devel'
+
+    - uses: actions/upload-artifact@v4
+      name: Upload production binary
       with:
         path: 'indigo'
         name: 'indigo'
@@ -99,7 +108,7 @@ jobs:
       - uses: actions/download-artifact@v4
         name: Download server artifact
         with:
-          name: "indigo"
+          name: "indigo_devel"
 
       - name: Set server executable
         run: chmod +x indigo
