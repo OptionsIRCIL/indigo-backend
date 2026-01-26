@@ -111,14 +111,14 @@ jobs:
           name: "indigo_devel"
 
       - name: Set server executable
-        run: chmod +x indigo
+        run: chmod +x indigo_devel
 
       - name: Install example env
         run: cp .env.example .env
 
       - name: Test route documentation
         env: 
-          INDIGO_BACKEND_EXECUTABLE_LOCATION: "./indigo"
+          INDIGO_BACKEND_EXECUTABLE_LOCATION: "./indigo_devel"
           OPENAPI_SPEC_LOCATION: "./api/v1.json"
         run: python3 ./ci/routing_documentation.py -v
 
