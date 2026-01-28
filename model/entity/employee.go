@@ -1,7 +1,8 @@
 package entity
 
 type Employee struct {
-	Id        uint   `gorm:"column:id;size:128;" json:"id"`
+	Identifier
+	//Id        uint   `gorm:"column:id;size:128;" json:"id"`
 	FirstName string `gorm:"column:firstName;size:255;" json:"firstName"`
 	LastName  string `gorm:"column:lastName;size:255;" json:"lastName"`
 

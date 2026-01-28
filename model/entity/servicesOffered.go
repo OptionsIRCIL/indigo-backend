@@ -1,7 +1,8 @@
 package entity
 
 type ServicesOffered struct {
-	Id          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+	Identifier
+	//Id          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 	ServiceName string `gorm:"column:serviceName;size:100;not null" json:"serviceName"`
 	Description string `gorm:"column:description;size:255" json:"description"`
 

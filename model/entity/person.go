@@ -3,7 +3,8 @@ package entity
 import "time"
 
 type Person struct {
-	Id         uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	Identifier
+	//Id         uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 	FirstName  string    `gorm:"column:firstName;size:100;not null" json:"firstName"`
 	LastName   string    `gorm:"column:lastName;size:100;not null" json:"lastName"`
 	Salutation string    `gorm:"column:salutation;size:20" json:"salutation"`

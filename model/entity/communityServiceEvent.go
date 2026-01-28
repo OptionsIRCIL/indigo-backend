@@ -3,7 +3,8 @@ package entity
 import "time"
 
 type CommunityServiceEvent struct {
-	Id                      uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	Identifier
+	//Id                      uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 	InitialDate             time.Time `gorm:"column:initialDate;type:datetime;not null" json:"initialDate"`
 	Category                string    `gorm:"column:category;size:100;not null" json:"category"`
 	FutureReference         string    `gorm:"column:futureReference;size:255" json:"futureReference"`
