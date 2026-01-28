@@ -17,22 +17,23 @@ import s "myoptions.info/indigo/backend/internal/service"
 
 // generates a RouterConfig subtree for any entity provided as [T]
 func generateCRUDRoutes[T any](db *gorm.DB, path string) RouterConfig {
-	repo := &model.CrudRepository[T]{DB: db}
-	ctrl := &c.CrudController[T]{Repo: repo}
+	// The Primitive functions need the full path format including :id:
+	// to build the regex for validation and extraction.
+	fullPathWithId := path + "/:id:"
 
 	return RouterConfig{
 		Path: path,
 		Methods: []methodConfig{
-			{Method: "GET", Handler: ctrl.GetAll()},
-			{Method: "POST", Handler: ctrl.Create()},
+			{Method: "GET", Handler: c.PrimitiveGetCollection[T](db)},
+			{Method: "POST", Handler: c.PrimitivePost[T](db)},
 		},
 		Children: []RouterConfig{
 			{
-				Path: "/{id}",
+				Path: "/:id:", // Using the key your regex expects
 				Methods: []methodConfig{
-					{Method: "GET", Handler: ctrl.GetOne()},
-					{Method: "PUT", Handler: ctrl.Update()},
-					{Method: "DELETE", Handler: ctrl.Delete()},
+					{Method: "GET", Handler: c.PrimitiveGetOne[T](db, fullPathWithId)},
+					{Method: "PUT", Handler: c.PrimitivePut[T](db, fullPathWithId)},
+					{Method: "DELETE", Handler: c.PrimitiveDelete[T](db, fullPathWithId)},
 				},
 			},
 		},

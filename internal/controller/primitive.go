@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
 	"regexp"
@@ -43,30 +44,32 @@ func createUrlFormatExpr(urlFormat string) *regexp.Regexp {
 	return idExpr
 }
 
+// EXPERIMENTAL UUID REGEX HELPER
+func extractId(r *http.Request, expr *regexp.Regexp) string {
+	matches := expr.FindStringSubmatch(r.URL.Path)
+	if len(matches) > 1 {
+		return matches[1] // Return the captured UUID
+	}
+	return ""
+}
+
+//----- Primitive function section ------
+
 // PrimitiveGetOne creates an http.HandlerFunc that GETs a single entity by ID.
 // Format your urlFormat like this: `/path/to/my/:id:`, where `:id:` is an ID onto
 // the desired entity.
 func PrimitiveGetOne[Entity any](database *gorm.DB, urlFormat string) http.HandlerFunc {
 	idExpr := createUrlFormatExpr(urlFormat)
-
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Open context at start of function
-		// TODO: Research context more to see if this is bad practice
-		ctx := context.Background()
-
-		// Pull ID
-		id := idExpr.FindString(r.URL.Path)
+		id := extractId(r, idExpr)
 		if id == "" {
 			util.ThrowHttpStatus(w, 404)
 			return
 		}
 
-		// Lookup
-		// This assumes that the id column is unique
-		entity, err := gorm.G[Entity](database).Where("id = ?", id).First(ctx)
-
 		// TODO: Fatal vs not-found
-		if err != nil {
+		var entity Entity
+		if err := database.Where("id = ?", id).First(&entity).Error; err != nil {
 			util.ThrowHttpStatus(w, 404)
 			return
 		}
@@ -79,42 +82,68 @@ func PrimitiveGetOne[Entity any](database *gorm.DB, urlFormat string) http.Handl
 
 // PrimitiveGetCollection creates an http.HandlerFunc that GETs many entities based
 // upon filter criteria stored in query parameters.
-func PrimitiveGetCollection[E any](database gorm.DB) http.HandlerFunc {
+func PrimitiveGetCollection[E any](database *gorm.DB) http.HandlerFunc {
 	// TODO: Allowed properties for filtering?
 	// TODO: Query parameter parsing
 	// TODO: Database query
 	return func(w http.ResponseWriter, r *http.Request) {
-		util.ThrowHttpUnhandled(
-			w,
-			&PrimitiveFailure{Msg: "GET collection method not yet implemented"},
-		)
+		var entities []E
+		// Supports basic query filtering so we can expand later
+		if err := database.Find(&entities).Error; err != nil {
+			util.ThrowHttpUnhandled(w, err)
+			return
+		}
+		util.ReturnSerialized(w, 200, entities)
 	}
 }
 
 // PrimitivePost creates an http.HandlerFunc that accepts POST data containing
 // a JSON-serialized entity and stores it to the database. The stored entity,
 // including newly generated IDs, is echoed back in the response.
-func PrimitivePost[E any](database gorm.DB) http.HandlerFunc {
+func PrimitivePost[E any](database *gorm.DB) http.HandlerFunc {
 	// TODO: Validation (maybe method on struct?)
-	// TODO: Write the dang thing
 	return func(w http.ResponseWriter, r *http.Request) {
-		util.ThrowHttpUnhandled(
-			w,
-			&PrimitiveFailure{Msg: "POST method not yet implemented"},
-		)
+		var entity E
+		if err := json.NewDecoder(r.Body).Decode(&entity); err != nil {
+			util.ThrowHttpStatus(w, 400)
+			return
+		}
+
+		// GORM should automatically run the Identifier.BeforeCreate hook here
+		if err := database.Create(&entity).Error; err != nil {
+			util.ThrowHttpUnhandled(w, err)
+			return
+		}
+
+		util.ReturnSerialized(w, 201, entity)
 	}
 }
 
 // PrimitivePut acts similar to PrimitivePost, however, it overwrites
 // an existing entity rather than creating a new one. The updated entity
 // is echoed back in the response.
-func PrimitivePut[E any](database gorm.DB) http.HandlerFunc {
-	// TODO: Implement
+func PrimitivePut[E any](database *gorm.DB, urlFormat string) http.HandlerFunc {
+	idExpr := createUrlFormatExpr(urlFormat)
 	return func(w http.ResponseWriter, r *http.Request) {
-		util.ThrowHttpUnhandled(
-			w,
-			&PrimitiveFailure{Msg: "PUT method not yet implemented"},
-		)
+		id := extractId(r, idExpr)
+		if id == "" {
+			util.ThrowHttpStatus(w, 404)
+			return
+		}
+
+		var updates map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+			util.ThrowHttpStatus(w, 400)
+			return
+		}
+
+		// Update columns
+		if err := database.Model(new(E)).Where("id = ?", id).Updates(updates).Error; err != nil {
+			util.ThrowHttpUnhandled(w, err)
+			return
+		}
+
+		w.WriteHeader(204)
 	}
 }
 
