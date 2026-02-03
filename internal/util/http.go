@@ -1,7 +1,6 @@
 package util
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 )
@@ -19,10 +18,30 @@ var httpStatusDescriptions = map[int]string{
 	500: "Internal server error",
 }
 
+func PathConcat(left string, right string) string {
+	if len(left) == 0 && right[0] == '/' {
+		return right
+	}
+
+	if len(left) == 0 {
+		return "/" + right
+	}
+
+	if left[len(left)-1] == '/' && right[0] == '/' {
+		return left + right[1:]
+	}
+
+	if left[len(left)-1] != '/' && left[0] != '/' {
+		return left + "/" + right
+	}
+
+	return left + right
+}
+
 // ReturnSerialized marshals a struct of any type into a JSON string and adds
 // it to an [http.ResponseWriter]. The status code and content type are also set.
-func ReturnSerialized(w http.ResponseWriter, status int, payload any) {
-	serialized, err := json.Marshal(payload)
+func ReturnSerialized(w http.ResponseWriter, status int, payload any, serializerGroups []string) {
+	serialized, err := Serialize(payload, serializerGroups)
 	if err != nil {
 		// We might get stuck in a recursion loop doing this but i don't give a swag atm
 		ThrowHttpUnhandled(w, err)
@@ -39,7 +58,7 @@ func ThrowHttpError(w http.ResponseWriter, status int, message string) {
 	ReturnSerialized(w, status, &HttpError{
 		Status:  status,
 		Message: message,
-	})
+	}, nil)
 }
 
 // ThrowHttpStatus will write a suitable generic response body given a known

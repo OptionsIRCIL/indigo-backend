@@ -50,16 +50,6 @@ func RunServe(flags util.ServeRuntimeFlags) int {
 		log.Fatal(jwtInitErr)
 	}
 
-	// Create routes using MuxWrapper
-	mux := c.CreateMux(
-		c.Services{
-			Config: config,
-			Ldap:   &l,
-			Jwt:    &jwtTransformer,
-			Flags:  flags,
-		},
-	)
-
 	// Configure GORM logger
 	newLogger := gormlogger.Default.LogMode(gormlogger.Silent)
 	if config.IndigoEnv == "dev" {
@@ -79,6 +69,17 @@ func RunServe(flags util.ServeRuntimeFlags) int {
 	if err := util.RunMigrations(database); err != nil {
 		log.Fatalf("FATAL: Database migration failed: %v", err)
 	}
+
+	// Create routes using MuxWrapper
+	mux := c.CreateMux(
+		c.Services{
+			Config:   config,
+			Ldap:     &l,
+			Jwt:      &jwtTransformer,
+			Flags:    flags,
+			Database: database,
+		},
+	)
 
 	// Serve
 	if flags.Socket == "" {

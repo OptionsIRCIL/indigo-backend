@@ -1,14 +1,16 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
 	"os"
 
+	"gorm.io/gorm"
 	"myoptions.info/indigo/backend/internal/middleware"
 	"myoptions.info/indigo/backend/internal/util"
+	"myoptions.info/indigo/backend/model/entity"
+	"myoptions.info/indigo/backend/model/schema"
 )
 import c "myoptions.info/indigo/backend/internal/controller"
 import s "myoptions.info/indigo/backend/internal/service"
@@ -17,18 +19,7 @@ import s "myoptions.info/indigo/backend/internal/service"
 // It also adds an OPTIONS method to support CORS preflight requests.
 func (m *MuxWrapper) registerRouterNode(node RouterConfig, parentPath string) {
 	// Concat the parent path with this node's path for fully-qualified path
-	path := parentPath
-	if parentPath != "" {
-		if path[len(path)-1] == '/' && node.Path[0] == '/' {
-			path = path + node.Path[1:]
-		} else if path[len(path)-1] != '/' && node.Path[0] != '/' {
-			path = path + "/" + node.Path
-		} else {
-			path = path + node.Path
-		}
-	} else {
-		path = node.Path
-	}
+	path := util.PathConcat(parentPath, node.Path)
 
 	// Register path to declared operations in router and collect list of methods
 	methods := make([]string, len(node.Methods))
@@ -51,34 +42,95 @@ func (m *MuxWrapper) registerRouterNode(node RouterConfig, parentPath string) {
 
 // Initialize begins adding the root route and its children to the mux.
 func (m *MuxWrapper) Initialize() {
-	m.registerRouterNode(m.routes, "")
+	m.registerRouterNode(m.Routes, "")
 }
 
 // CreateMux takes in a [Services] struct, and using the contained utilities, constructs an [http.ServeMux]
 // that aggregates the various handler functions used in the application.
 func CreateMux(services Services) MuxWrapper {
+	auth := func(next http.HandlerFunc) http.HandlerFunc {
+		return middleware.RequireAuth(services.Jwt, services.Ldap, next)
+	}
+
 	mux := MuxWrapper{
 		mux:      http.NewServeMux(),
 		services: services,
-		routes: RouterConfig{
+		Routes: RouterConfig{
 			Path: "/",
-			Methods: []methodConfig{
+			Methods: []MethodConfig{
 				{
 					Method:  "GET",
-					Handler: middleware.RequireAuth(services.Jwt, services.Ldap, c.IndexHelloWorld),
+					Summary: `Demo "Hello World" endpoint.`,
+					Handler: auth(c.IndexHelloWorld),
 				},
 			},
 			Children: []RouterConfig{
 				{
 					Path: "/auth",
-					Methods: []methodConfig{
+					Methods: []MethodConfig{
 						{
 							Method:  "POST",
+							Summary: "Authenticate against LDAP to request an authentication token.",
+							InputDto: &DataTransferObject{
+								Interface: schema.LoginCredentials{},
+							},
+							Responses: map[int]Response{
+								204: {
+									Description: "Successful Authentication",
+								},
+								422: {
+									Description: "Invalid Credentials",
+									Dto: &DataTransferObject{
+										Interface: util.HttpError{},
+									},
+								},
+							},
 							Handler: c.AuthEntry(services.Config, services.Ldap, services.Jwt, services.Flags.AuthSameSite),
 						},
 						{
 							Method:  "DELETE",
+							Summary: "Delete current cookie",
 							Handler: c.DeleteCookie(services.Config),
+							Responses: map[int]Response{
+								204: {
+									Description: "yeag",
+								},
+							},
+						},
+					},
+				},
+				{
+					Path: "/person",
+					Methods: []MethodConfig{
+						{
+							Method:  "POST",
+							Summary: "Create a new person",
+							InputDto: &DataTransferObject{
+								Interface: entity.Person{},
+								Groups:    []string{"post"},
+							},
+							Handler: auth(c.PrimitivePost[entity.Person](
+								services.Database,
+								c.SerializationParameters{
+									SerializationGroup:   []string{"post"},
+									DeserializationGroup: []string{"get"},
+								},
+							)),
+							Responses: map[int]Response{
+								201: {
+									Description: "Person successfully created",
+									Dto: &DataTransferObject{
+										Interface: entity.Person{},
+										Groups:    []string{"get"},
+									},
+								},
+								422: {
+									Description: "Serialization error",
+									Dto: &DataTransferObject{
+										Interface: util.HttpError{},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -120,46 +172,47 @@ func (m *MuxWrapper) ServeToSocket(socket string, uid int, gid int) error {
 	return http.Serve(listener, m.mux)
 }
 
-// DumpRoutes dumps the routing config to JSON. Useful for verifying documentation
-// in CI jobs.
-func (m *MuxWrapper) DumpRoutes() string {
-	encoded, _ := json.MarshalIndent(m.routes, "", "  ")
-	return string(encoded)
-}
-
 // Services is an aggregation of various tools that will be made available during assembly
 // of a routerConfig.
 type Services struct {
-	Config *util.Config
-	Ldap   *s.LdapConnection
-	Jwt    *s.JwtTransformer
-	Flags  util.ServeRuntimeFlags
+	Config   *util.Config
+	Ldap     *s.LdapConnection
+	Jwt      *s.JwtTransformer
+	Flags    util.ServeRuntimeFlags
+	Database *gorm.DB
 }
 
-// MuxWrapper ideally wraps around an [http.ServeMux] to abstract away some common middleware or routes
+// MuxWrapper ideally wraps around an [http.ServeMux] to abstract away some common middleware or Routes
 // such as logging, user authentication, or CORS headers.
 type MuxWrapper struct {
 	mux      *http.ServeMux
 	services Services
-	routes   RouterConfig
+	Routes   RouterConfig
 }
 
-// methodConfig defines the behavior that a mux should follow for a Method invoked on a given route.
-type methodConfig struct {
-	Method  string
-	Handler http.HandlerFunc
+type DataTransferObject struct {
+	Interface interface{}
+	Groups    []string
 }
 
-// MarshalJSON abstracts away a methodConfig to only return the method string
-// when being printed by the JSON marshaller.
-func (m *methodConfig) MarshalJSON() ([]byte, error) {
-	return []byte("\"" + m.Method + "\""), nil
+type Response struct {
+	Description string
+	Dto         *DataTransferObject
+}
+
+// MethodConfig defines the behavior that a mux should follow for a Method invoked on a given route.
+type MethodConfig struct {
+	Method    string
+	Summary   string
+	InputDto  *DataTransferObject
+	Responses map[int]Response
+	Handler   http.HandlerFunc
 }
 
 // RouterConfig defines each route added to the application.
 // TODO: Middleware?
 type RouterConfig struct {
 	Path     string         `json:"path"`               // The Path to assign methods to.
-	Methods  []methodConfig `json:"methods"`            // What to do for each available HTTP method.
+	Methods  []MethodConfig `json:"methods"`            // What to do for each available HTTP method.
 	Children []RouterConfig `json:"children,omitempty"` // Each child will inherit the parent's Path.
 }
