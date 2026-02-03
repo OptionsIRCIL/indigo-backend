@@ -55,7 +55,7 @@ func ReturnSerialized(w http.ResponseWriter, status int, payload any, serializer
 // ThrowHttpError writes both an HTTP status and message in a serialized format,
 // [HttpError], to an [http.ResponseWriter].
 func ThrowHttpError(w http.ResponseWriter, status int, message string) {
-	ReturnSerialized(w, status, &HttpError{
+	ReturnSerialized(w, status, HttpError{
 		Status:  status,
 		Message: message,
 	}, nil)
@@ -82,5 +82,8 @@ func ThrowHttpStatus(w http.ResponseWriter, status int) {
 // Additionally, it writes the encountered error to the server log.
 func ThrowHttpUnhandled(w http.ResponseWriter, e error) {
 	log.Print("Unhandled error: ", e.Error())
-	ThrowHttpStatus(w, 500)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+	w.Write([]byte(`{"status":500,"message":"Internal server error"}`))
 }

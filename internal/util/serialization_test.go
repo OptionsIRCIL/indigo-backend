@@ -25,8 +25,8 @@ func ExampleDeserialize() {
 	goodStudentData := strings.NewReader(`{ "firstName": "Jimmy", "lastName": "Neutron" }`)
 	badStudentData := strings.NewReader(`{ "firstName": "Carl", "lastName": "Wheezer", "ssn": "123123123" }`)
 
-	goodErr, goodStudent := Deserialize[Student](goodStudentData, "post")
-	badErr, badStudent := Deserialize[Student](badStudentData, "post")
+	goodErr, goodStudent := Deserialize[Student](goodStudentData, []string{"post"})
+	badErr, badStudent := Deserialize[Student](badStudentData, []string{"post"})
 
 	if goodErr == nil {
 		fmt.Printf("goodStudent Successfully Deserialized! Data: %s\n", goodStudent)
@@ -52,7 +52,7 @@ func TestDeserialize(t *testing.T) {
 			"firstName": "Jimmy",
 			"lastName": "Neutron"
 		}`),
-		"post",
+		[]string{"post"},
 	)
 	if case1Error != nil {
 		t.Error("Deserialization unexpectedly failed for case 1")
@@ -65,7 +65,7 @@ func TestDeserialize(t *testing.T) {
 			"lastName": "Neutron",
 			"ssn": "123123123"
 		}`),
-		"post",
+		[]string{"post"},
 	)
 	if case2Error == nil {
 		t.Error("Deserialization unexpectedly succeeded for case 2")
@@ -89,7 +89,7 @@ func TestDeserialize(t *testing.T) {
 			],
 			"sections": [123, 456, 789]
 		}`),
-		"post",
+		[]string{"post"},
 	)
 	if case3Error != nil {
 		t.Error("Deserialization unexpectedly failed for case 3")
@@ -114,7 +114,7 @@ func TestDeserialize(t *testing.T) {
 			],
 			"sections": [123, 456, 789]
 		}`),
-		"post",
+		[]string{"post"},
 	)
 	if case4Error == nil {
 		t.Error("Deserialization unexpectedly succeeded for case 4")
@@ -128,7 +128,7 @@ func ExampleSerialize() {
 		LastName:  "Benz",
 	}
 
-	serializedStudent, _ := Serialize(student, "get")
+	serializedStudent, _ := Serialize(student, []string{"get"})
 	fmt.Println(string(serializedStudent))
 
 	// output: {"firstName":"Mercedes","lastName":"Benz"}

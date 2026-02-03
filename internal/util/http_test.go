@@ -29,7 +29,7 @@ func ExampleReturnSerialized() {
 		175,
 	}
 
-	ReturnSerialized(w, 200, &payload)
+	ReturnSerialized(w, 200, payload, nil)
 	fmt.Printf(
 		"Body=%s, Code=%d, Content-Type=%s",
 		w.Body,
