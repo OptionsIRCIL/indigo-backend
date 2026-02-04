@@ -58,15 +58,18 @@ func PrimitiveGetOne[Entity interface{}](database *gorm.DB, serializationGroups 
 
 // PrimitiveGetCollection creates an http.HandlerFunc that GETs many entities based
 // upon filter criteria stored in query parameters.
-func PrimitiveGetCollection[E interface{}](database gorm.DB, serializationGroup string) http.HandlerFunc {
+func PrimitiveGetCollection[E any](database *gorm.DB) http.HandlerFunc {
 	// TODO: Allowed properties for filtering?
 	// TODO: Query parameter parsing
 	// TODO: Database query
 	return func(w http.ResponseWriter, r *http.Request) {
-		util.ThrowHttpUnhandled(
-			w,
-			&PrimitiveFailure{Msg: "GET collection method not yet implemented"},
-		)
+		var entities []E
+		// Supports basic query filtering so we can expand later
+		if err := database.Find(&entities).Error; err != nil {
+			util.ThrowHttpUnhandled(w, err)
+			return
+		}
+		util.ReturnSerialized(w, 200, entities)
 	}
 }
 
@@ -101,13 +104,28 @@ func PrimitivePost[Entity interface{}](database *gorm.DB, serializationParameter
 // PrimitivePut acts similar to PrimitivePost, however, it overwrites
 // an existing entity rather than creating a new one. The updated entity
 // is echoed back in the response.
-func PrimitivePut[E interface{}](database gorm.DB) http.HandlerFunc {
+func PrimitivePut[E interface{}](database *gorm.DB) http.HandlerFunc {
 	// TODO: Implement
 	return func(w http.ResponseWriter, r *http.Request) {
-		util.ThrowHttpUnhandled(
-			w,
-			&PrimitiveFailure{Msg: "PUT method not yet implemented"},
-		)
+		id := extractId(r, idExpr)
+		if id == "" {
+			util.ThrowHttpStatus(w, 404)
+			return
+		}
+
+		var updates map[string]interface{}
+		if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+			util.ThrowHttpStatus(w, 400)
+			return
+		}
+
+		// Update columns
+		if err := database.Model(new(E)).Where("id = ?", id).Updates(updates).Error; err != nil {
+			util.ThrowHttpUnhandled(w, err)
+			return
+		}
+
+		w.WriteHeader(204)
 	}
 }
 

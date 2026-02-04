@@ -15,6 +15,31 @@ import (
 import c "myoptions.info/indigo/backend/internal/controller"
 import s "myoptions.info/indigo/backend/internal/service"
 
+// generates a RouterConfig subtree for any entity provided as [T]
+func generateCRUDRoutes[T any](db *gorm.DB, path string) RouterConfig {
+	// The Primitive functions need the full path format including :id:
+	// to build the regex for validation and extraction.
+	fullPathWithId := path + "/:id:"
+
+	return RouterConfig{
+		Path: path,
+		Methods: []methodConfig{
+			{Method: "GET", Handler: c.PrimitiveGetCollection[T](db)},
+			{Method: "POST", Handler: c.PrimitivePost[T](db)},
+		},
+		Children: []RouterConfig{
+			{
+				Path: "/:id:", // Using the key your regex expects
+				Methods: []methodConfig{
+					{Method: "GET", Handler: c.PrimitiveGetOne[T](db, fullPathWithId)},
+					{Method: "PUT", Handler: c.PrimitivePut[T](db, fullPathWithId)},
+					{Method: "DELETE", Handler: c.PrimitiveDelete[T](db, fullPathWithId)},
+				},
+			},
+		},
+	}
+}
+
 // registerRouterNode recursively registers a routerNode and its children to a mux.
 // It also adds an OPTIONS method to support CORS preflight requests.
 func (m *MuxWrapper) registerRouterNode(node RouterConfig, parentPath string) {
@@ -134,6 +159,19 @@ func CreateMux(services Services) MuxWrapper {
 						},
 					},
 				},
+				//ugly, will look into how to make this not a line spam
+				generateCRUDRoutes[entity.AddressPhone](services.Db, "/address-phone"),
+				generateCRUDRoutes[entity.Employee](services.Db, "/employee"),
+				generateCRUDRoutes[entity.Person](services.Db, "/person"),
+				generateCRUDRoutes[entity.Alias](services.Db, "/alias"),
+				generateCRUDRoutes[entity.CommunityServiceEvent](services.Db, "/community-service-event"),
+				generateCRUDRoutes[entity.ConsumerService](services.Db, "/consumer-service"),
+				generateCRUDRoutes[entity.DisabilityInfo](services.Db, "/disability-info"),
+				generateCRUDRoutes[entity.Goal](services.Db, "/goal"),
+				generateCRUDRoutes[entity.InformationAndReferral](services.Db, "/information-and-referral"),
+				generateCRUDRoutes[entity.Organization](services.Db, "/organization"),
+				generateCRUDRoutes[entity.RecordDef](services.Db, "/record-def"),
+				generateCRUDRoutes[entity.ServicesOffered](services.Db, "/services-offered"),
 			},
 		},
 	}

@@ -1,7 +1,8 @@
 package entity
 
 type AddressPhone struct {
-	Id          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
+	Identifier
+	//Id          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
 	PhoneNumber string `gorm:"column:phoneNumber;size:25;not null" json:"phoneNumber"`
 	Type        string `gorm:"column:type;size:50;not null" json:"type"`
 
