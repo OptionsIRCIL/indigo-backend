@@ -16,24 +16,20 @@ import c "myoptions.info/indigo/backend/internal/controller"
 import s "myoptions.info/indigo/backend/internal/service"
 
 // generates a RouterConfig subtree for any entity provided as [T]
-func generateCRUDRoutes[T any](db *gorm.DB, path string) RouterConfig {
-	// The Primitive functions need the full path format including :id:
-	// to build the regex for validation and extraction.
-	fullPathWithId := path + "/:id:"
-
+func generateCrudRoutes[T interface{}](database *gorm.DB, path string) RouterConfig {
 	return RouterConfig{
 		Path: path,
-		Methods: []methodConfig{
-			{Method: "GET", Handler: c.PrimitiveGetCollection[T](db)},
-			{Method: "POST", Handler: c.PrimitivePost[T](db)},
+		Methods: []MethodConfig{
+			{Method: "GET", Handler: c.PrimitiveGetCollection[T](database, nil)},
+			{Method: "POST", Handler: c.PrimitivePost[T](database, nil)},
 		},
 		Children: []RouterConfig{
 			{
-				Path: "/:id:", // Using the key your regex expects
-				Methods: []methodConfig{
-					{Method: "GET", Handler: c.PrimitiveGetOne[T](db, fullPathWithId)},
-					{Method: "PUT", Handler: c.PrimitivePut[T](db, fullPathWithId)},
-					{Method: "DELETE", Handler: c.PrimitiveDelete[T](db, fullPathWithId)},
+				Path: "/{id}",
+				Methods: []MethodConfig{
+					{Method: "GET", Handler: c.PrimitiveGetOne[T](database, nil)},
+					{Method: "PUT", Handler: c.PrimitivePut[T](database, nil)},
+					{Method: "DELETE", Handler: c.PrimitiveDelete[T](database)},
 				},
 			},
 		},
@@ -136,7 +132,7 @@ func CreateMux(services Services) MuxWrapper {
 							},
 							Handler: auth(c.PrimitivePost[entity.Person](
 								services.Database,
-								c.SerializationParameters{
+								&c.SerializationParameters{
 									SerializationGroup:   []string{"post"},
 									DeserializationGroup: []string{"get"},
 								},
@@ -159,19 +155,6 @@ func CreateMux(services Services) MuxWrapper {
 						},
 					},
 				},
-				//ugly, will look into how to make this not a line spam
-				generateCRUDRoutes[entity.AddressPhone](services.Db, "/address-phone"),
-				generateCRUDRoutes[entity.Employee](services.Db, "/employee"),
-				generateCRUDRoutes[entity.Person](services.Db, "/person"),
-				generateCRUDRoutes[entity.Alias](services.Db, "/alias"),
-				generateCRUDRoutes[entity.CommunityServiceEvent](services.Db, "/community-service-event"),
-				generateCRUDRoutes[entity.ConsumerService](services.Db, "/consumer-service"),
-				generateCRUDRoutes[entity.DisabilityInfo](services.Db, "/disability-info"),
-				generateCRUDRoutes[entity.Goal](services.Db, "/goal"),
-				generateCRUDRoutes[entity.InformationAndReferral](services.Db, "/information-and-referral"),
-				generateCRUDRoutes[entity.Organization](services.Db, "/organization"),
-				generateCRUDRoutes[entity.RecordDef](services.Db, "/record-def"),
-				generateCRUDRoutes[entity.ServicesOffered](services.Db, "/services-offered"),
 			},
 		},
 	}

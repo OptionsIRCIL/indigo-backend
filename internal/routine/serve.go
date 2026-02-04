@@ -65,17 +65,6 @@ func RunServe(flags util.ServeRuntimeFlags) int {
 	}
 	log.Printf("Successfully connected to MariaDB: %s", "indigo_cil_dev")
 
-	// Create routes using MuxWrapper
-	mux := c.CreateMux(
-		c.Services{
-			Config: config,
-			Ldap:   &l,
-			Jwt:    &jwtTransformer,
-			Flags:  flags,
-			Db:     database,
-		},
-	)
-
 	// Run migrations
 	if err := util.RunMigrations(database); err != nil {
 		log.Fatalf("FATAL: Database migration failed: %v", err)

@@ -58,7 +58,7 @@ func PrimitiveGetOne[Entity interface{}](database *gorm.DB, serializationGroups 
 
 // PrimitiveGetCollection creates an http.HandlerFunc that GETs many entities based
 // upon filter criteria stored in query parameters.
-func PrimitiveGetCollection[E any](database *gorm.DB) http.HandlerFunc {
+func PrimitiveGetCollection[E interface{}](database *gorm.DB, serializationGroups []string) http.HandlerFunc {
 	// TODO: Allowed properties for filtering?
 	// TODO: Query parameter parsing
 	// TODO: Database query
@@ -69,14 +69,14 @@ func PrimitiveGetCollection[E any](database *gorm.DB) http.HandlerFunc {
 			util.ThrowHttpUnhandled(w, err)
 			return
 		}
-		util.ReturnSerialized(w, 200, entities)
+		util.ReturnSerialized(w, 200, entities, serializationGroups)
 	}
 }
 
 // PrimitivePost creates an http.HandlerFunc that accepts POST data containing
 // a JSON-serialized entity and stores it to the database. The stored entity,
 // including newly generated IDs, is echoed back in the response.
-func PrimitivePost[Entity interface{}](database *gorm.DB, serializationParameters SerializationParameters) http.HandlerFunc {
+func PrimitivePost[Entity interface{}](database *gorm.DB, serializationParameters *SerializationParameters) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := context.Background()
 
@@ -104,23 +104,58 @@ func PrimitivePost[Entity interface{}](database *gorm.DB, serializationParameter
 // PrimitivePut acts similar to PrimitivePost, however, it overwrites
 // an existing entity rather than creating a new one. The updated entity
 // is echoed back in the response.
-func PrimitivePut[E interface{}](database *gorm.DB) http.HandlerFunc {
-	// TODO: Implement
+func PrimitivePut[Entity interface{}](database *gorm.DB, serializationParameters *SerializationParameters) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		id := extractId(r, idExpr)
+		ctx := context.Background()
+
+		// Pull ID
+		id := r.PathValue("id")
 		if id == "" {
 			util.ThrowHttpStatus(w, 404)
 			return
 		}
 
-		var updates map[string]interface{}
-		if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
-			util.ThrowHttpStatus(w, 400)
+		// Lookup
+		// This assumes that the id column is unique
+		entity, err := gorm.G[Entity](database).Where("id = ?", id).First(ctx)
+
+		// TODO: Fatal vs not-found
+		if err != nil {
+			util.ThrowHttpStatus(w, 404)
 			return
 		}
 
-		// Update columns
-		if err := database.Model(new(E)).Where("id = ?", id).Updates(updates).Error; err != nil {
+		deserializationGroups := serializationParameters.DeserializationGroup
+		if deserializationGroups == nil {
+			deserializationGroups = make([]string, 0)
+		}
+
+		deserializationErr, entity := util.Deserialize[Entity](r.Body, serializationParameters.DeserializationGroup)
+		if deserializationErr != nil {
+			util.ThrowHttpError(w, 422, "Could not deserialize PUT body")
+			return
+		}
+
+		// Begin transaction
+		err = database.Transaction(func(tx *gorm.DB) error {
+			// This assumes that the id column is unique
+			affectedRows, updateErr := gorm.G[Entity](tx).Where("id = ?", id).Updates(ctx, entity)
+
+			if updateErr != nil {
+				return err
+			}
+
+			// Ensure only one row deleted
+			if affectedRows != 1 {
+				return &PrimitiveFailure{Msg: "Multiple rows affected on PUT operation, rolling back"}
+			}
+
+			// I think we're good chat
+			return nil
+		})
+
+		// TODO: Better error messages/handling
+		if err != nil {
 			util.ThrowHttpUnhandled(w, err)
 			return
 		}
@@ -165,7 +200,7 @@ func PrimitiveDelete[Entity interface{}](database *gorm.DB) http.HandlerFunc {
 
 			// Ensure only one row deleted
 			if rowsAffected != 1 {
-				return &PrimitiveFailure{Msg: "Multiple rows affected on delete operation, rolling back"}
+				return &PrimitiveFailure{Msg: "Multiple rows affected on DELETE operation, rolling back"}
 			}
 
 			// I think we're good chat
