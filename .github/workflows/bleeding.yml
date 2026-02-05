@@ -64,7 +64,6 @@ jobs:
       name: Download server artifact
       with:
         name: "indigo"
-        path: "indigo"
 
     - name: Invoke generation subcommand
       run: ./indigo generate_openapi_spec > v1.json
