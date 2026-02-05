@@ -1,10 +1,11 @@
 package entity
 
-type RecordDef struct {
-	Identifier
-	//Id    uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-	Type  string `gorm:"column:type;size:50;not null" json:"type"`
-	Value string `gorm:"column:value;size:255;not null" json:"value"`
+import "github.com/google/uuid"
 
-	PersonId uint `gorm:"column:personId;not null" json:"personId"`
+type RecordDef struct {
+	Id    uuid.UUID `gorm:"primaryKey;type:char(36)" json:"id"`
+	Type  string    `gorm:"size:50;not null" json:"type"`
+	Value string    `gorm:"size:255;not null" json:"value"`
+
+	PersonId uuid.UUID `gorm:"column:personId;not null" json:"personId"`
 }

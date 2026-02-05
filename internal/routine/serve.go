@@ -7,6 +7,7 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
+	"gorm.io/gorm/schema"
 	c "myoptions.info/indigo/backend/internal/config"
 	s "myoptions.info/indigo/backend/internal/service"
 	"myoptions.info/indigo/backend/internal/util"
@@ -59,6 +60,10 @@ func RunServe(flags util.ServeRuntimeFlags) int {
 	// Connect to MariaDB
 	database, err := gorm.Open(mysql.Open(config.DatabaseDsn), &gorm.Config{
 		Logger: newLogger,
+		NamingStrategy: schema.NamingStrategy{
+			SingularTable: true,
+			NoLowerCase:   false,
+		},
 	})
 	if err != nil {
 		log.Fatalf("FATAL: Could not connect to MariaDB database: %v", err)

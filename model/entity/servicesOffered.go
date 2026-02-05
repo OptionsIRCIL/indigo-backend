@@ -1,11 +1,12 @@
 package entity
 
-type ServicesOffered struct {
-	Identifier
-	//Id          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-	ServiceName string `gorm:"column:serviceName;size:100;not null" json:"serviceName"`
-	Description string `gorm:"column:description;size:255" json:"description"`
+import "github.com/google/uuid"
 
-	ConsumerServiceId uint `gorm:"column:consumerServiceId;not null" json:"consumerServiceId"`
-	AddressPhoneId    uint `gorm:"column:addressPhoneId;not null" json:"addressPhoneId"`
+type ServicesOffered struct {
+	Id          uuid.UUID `gorm:"primaryKey;type:char(36)" json:"id"`
+	ServiceName string    `gorm:"size:100;not null" json:"serviceName"`
+	Description string    `gorm:"size:255" json:"description"`
+
+	ConsumerServiceId uuid.UUID `gorm:"not null" json:"consumerServiceId"`
+	AddressPhoneId    uuid.UUID `gorm:"not null" json:"addressPhoneId"`
 }

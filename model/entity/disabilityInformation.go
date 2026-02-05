@@ -1,11 +1,12 @@
 package entity
 
-type DisabilityInfo struct {
-	Identifier
-	//Id          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-	Disability  string `gorm:"column:disability;size:100;not null" json:"disability"`
-	Description string `gorm:"column:description;size:255" json:"description"`
-	Severity    string `gorm:"column:severity;size:50" json:"severity"`
+import "github.com/google/uuid"
 
-	PersonId uint `gorm:"column:personId;unique;not null" json:"personId"`
+type DisabilityInfo struct {
+	Id          uuid.UUID `gorm:"primaryKey;type:char(36)" json:"id"`
+	Disability  string    `gorm:"size:100;not null" json:"disability"`
+	Description string    `gorm:"size:255" json:"description"`
+	Severity    string    `gorm:"size:50" json:"severity"`
+
+	PersonId uuid.UUID `gorm:"unique;not null" json:"personId"`
 }

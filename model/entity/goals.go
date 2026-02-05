@@ -1,11 +1,12 @@
 package entity
 
-type Goal struct {
-	Identifier
-	//Id          uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-	GoalName    string `gorm:"column:goalName;size:100;not null" json:"goalName"`
-	Description string `gorm:"column:description;size:255" json:"description"`
-	Status      string `gorm:"column:status;size:50" json:"status"`
+import "github.com/google/uuid"
 
-	PersonId uint `gorm:"column:personId;not null" json:"personId"`
+type Goal struct {
+	Id          uuid.UUID `gorm:"primaryKey;type:char(36)" json:"id"`
+	GoalName    string    `gorm:"size:100;not null" json:"goalName"`
+	Description string    `gorm:"size:255" json:"description"`
+	Status      string    `gorm:"size:50" json:"status"`
+
+	PersonId uuid.UUID `gorm:"not null" json:"personId"`
 }

@@ -1,9 +1,10 @@
 package entity
 
-type Alias struct {
-	Identifier
-	//Id        uint   `gorm:"primaryKey;autoIncrement" json:"id"`
-	AliasName string `gorm:"column:aliasName;size:100;not null" json:"aliasName"`
+import "github.com/google/uuid"
 
-	PersonId uint `gorm:"column:personId;not null" json:"personId"`
+type Alias struct {
+	Id        uuid.UUID `gorm:"primaryKey;type:char(36)" json:"id"`
+	AliasName string    `gorm:"size:100;not null" json:"aliasName"`
+
+	PersonId uuid.UUID `gorm:"not null" json:"personId"`
 }

@@ -1,13 +1,16 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type InformationAndReferral struct {
-	Identifier
-	//Id          uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	InfoType    string    `gorm:"column:infoType;size:100;not null" json:"infoType"`
-	Description string    `gorm:"column:description;size:255" json:"description"`
-	Date        time.Time `gorm:"column:date;type:date" json:"date"`
+	Id          uuid.UUID `gorm:"primaryKey;type:char(36)" json:"id"`
+	InfoType    string    `gorm:"size:100;not null" json:"infoType"`
+	Description string    `gorm:"size:255" json:"description"`
+	Date        time.Time `gorm:"type:date" json:"date"`
 
-	PersonId uint `gorm:"column:personId;not null" json:"personId"`
+	PersonId uuid.UUID `gorm:"not null" json:"personId"`
 }
