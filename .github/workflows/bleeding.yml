@@ -65,6 +65,9 @@ jobs:
       with:
         name: "indigo"
 
+    - name: Make server binary executable
+      run: chmod +x ./indigo
+
     - name: Invoke generation subcommand
       run: ./indigo generate_openapi_spec > v1.json
 
