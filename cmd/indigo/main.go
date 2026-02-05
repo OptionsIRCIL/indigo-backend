@@ -17,7 +17,7 @@ func main() {
 	l.Println("Indigo CIL, v0.0.0")
 
 	// Check if valid subcommand exists
-	if len(os.Args) < 2 || !slices.Contains([]string{"serve", "dump_routes"}, os.Args[1]) {
+	if len(os.Args) < 2 || !slices.Contains([]string{"serve", "generate_openapi_spec"}, os.Args[1]) {
 		// Drill down exact error to be a little more helpful
 		var preciseError string
 		if len(os.Args) < 2 {
@@ -32,8 +32,8 @@ func main() {
 Subcommands available:
   serve:
         Serves backend application on a port or Unix socket. View further options by passing the -help flag.
-  dump_routes:
-        Dumps configured routes to stdout.`,
+  generate_openapi_spec:
+        Generates an OpenAPI 3.1 spec in JSON format and dumps it to STDOUT.`,
 		)
 	}
 
@@ -55,7 +55,7 @@ Subcommands available:
 
 		os.Exit(routine.RunServe(flags))
 
-	case "dump_routes":
-		os.Exit(routine.RunDumpRoutes())
+	case "generate_openapi_spec":
+		os.Exit(routine.RunGenerateOpenApiSpec())
 	}
 }

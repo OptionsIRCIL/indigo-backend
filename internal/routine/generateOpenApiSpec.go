@@ -128,9 +128,10 @@ func muxToOpenApi(mux *c.MuxWrapper) openApi.OpenApi {
 	return api
 }
 
-// RunDumpRoutes initializes some dummy services and dumps all configured routes from config.CreateMux.
+// RunGenerateOpenApiSpec initializes some dummy services and dumps all configured routes from config.CreateMux.
 // Utilized during testing to verify that all configured routes are documented in the OpenAPI spec.
-func RunDumpRoutes() int {
+// TODO Update description
+func RunGenerateOpenApiSpec() int {
 	// Create routes using MuxWrapper. Provide dummy services.
 	mux := c.CreateMux(
 		c.Services{
