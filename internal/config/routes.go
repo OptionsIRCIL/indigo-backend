@@ -133,8 +133,8 @@ func CreateMux(services Services) MuxWrapper {
 							Handler: auth(c.PrimitivePost[entity.Person](
 								services.Database,
 								&c.SerializationParameters{
-									SerializationGroup:   []string{"post"},
-									DeserializationGroup: []string{"get"},
+									SerializationGroup:   []string{"get"},
+									DeserializationGroup: []string{"post"},
 								},
 							)),
 							Responses: map[int]Response{
