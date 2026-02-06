@@ -87,7 +87,8 @@ func PrimitivePost[Entity interface{}](database *gorm.DB, serializationParameter
 
 		deserializationErr, entity := util.Deserialize[Entity](r.Body, serializationParameters.DeserializationGroup)
 		if deserializationErr != nil {
-			util.ThrowHttpError(w, 422, "Could not deserialize POST body")
+			// TODO: Are these messages safe to relay back to client?
+			util.ThrowHttpError(w, 422, "Could not deserialize POST body: "+deserializationErr.Error())
 			return
 		}
 

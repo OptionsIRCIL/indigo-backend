@@ -132,10 +132,26 @@ func maskToOpenApiSchema(reflection reflect.Type) openApi.SchemaType {
 		reflection = reflection.Elem()
 	}
 
-	// Edge cases for objects that don't serialize nicely
-	switch reflection.Name() {
-	case "UUID", "Time":
-		return openApi.SchemaType{Type: "string"}
+	// Edge cases for objects that don't serialize nicely or need additional context
+	switch reflection.PkgPath() + "/" + reflection.Name() {
+	case "github.com/google/uuid/UUID":
+		return openApi.SchemaType{
+			Type:    "string",
+			Format:  "UUIDv4",
+			Example: "00000000-0000-0000-0000-000000000000",
+		}
+	case "time/Time":
+		return openApi.SchemaType{
+			Type:    "string",
+			Format:  "RFC3339",
+			Example: "2006-01-02T15:04:05Z07:00",
+		}
+	case "myoptions.info/indigo/backend/model/Date":
+		return openApi.SchemaType{
+			Type:    "string",
+			Format:  "YYYY-MM-DD",
+			Example: "1970-01-01",
+		}
 	}
 
 	switch reflection.Kind() {

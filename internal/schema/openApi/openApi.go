@@ -11,6 +11,8 @@ type SchemaType struct {
 	Type       string                `json:"type"`
 	Properties map[string]SchemaType `json:"properties,omitempty"`
 	Items      *SchemaType           `json:"items,omitempty"`
+	Example    string                `json:"example,omitempty"`
+	Format     string                `json:"format,omitempty"`
 }
 
 type Components struct {
