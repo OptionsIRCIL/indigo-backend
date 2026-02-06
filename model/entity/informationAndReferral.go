@@ -13,18 +13,6 @@ type InformationAndReferral struct {
 	TravelHours int64     `gorm:"type:bigint" json:"travelHours"`
 	Department  string    `gorm:"type:varchar(255)" json:"department"`
 
-	//Personal Intake Information
-	Name      string `gorm:"type:varchar(255)" json:"name"`
-	Address   string `gorm:"type:varchar(255)" json:"address"`
-	City      string `gorm:"type:varchar(255)" json:"city"`
-	State     string `gorm:"type:varchar(255)" json:"state"`
-	Zip       int64  `gorm:"type:bigint" json:"zip"`
-	Phone     string `gorm:"type:varchar(255)" json:"phone"`
-	County    string `gorm:"type:varchar(255)" json:"county"`
-	Email     string `gorm:"type:varchar(255)" json:"email"`
-	Gender    string `gorm:"type:varchar(255)" json:"gender"`
-	Ethnicity string `gorm:"type:varchar(255)" json:"ethnicity"`
-
 	//Referral and Requests
 	CallerType     string `gorm:"type:varchar(255)" json:"callerType"`
 	Disability     string `gorm:"type:varchar(255)" json:"disability"`
