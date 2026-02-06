@@ -154,6 +154,71 @@ func CreateMux(services Services) MuxWrapper {
 							},
 						},
 					},
+					Children: []RouterConfig{
+						{
+							Path: "/{id}",
+							Methods: []MethodConfig{
+								{
+									Method:  "GET",
+									Summary: "Get a single person",
+									Handler: auth(c.PrimitiveGetOne[entity.Person](
+										services.Database,
+										[]string{"get"},
+									)),
+									Responses: map[int]Response{
+										200: {
+											Description: "Person found",
+											Dto: &DataTransferObject{
+												Interface: entity.Person{},
+												Groups:    []string{"get"},
+											},
+										},
+										404: {
+											Description: "Not found",
+											Dto: &DataTransferObject{
+												Interface: util.HttpError{},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Path: "/information-and-referral",
+					Methods: []MethodConfig{
+						{
+							Method:  "POST",
+							Summary: "Create a new Information and Referral entry",
+							InputDto: &DataTransferObject{
+								Interface: entity.InformationAndReferral{},
+								Groups:    []string{"post"},
+							},
+							Handler: auth(c.PrimitivePost[entity.InformationAndReferral](
+								services.Database,
+								&c.SerializationParameters{
+									SerializationGroup:   []string{"get"},
+									DeserializationGroup: []string{"post"},
+								},
+							)),
+							Responses: map[int]Response{
+								201: {
+									Description: "I&R successfully created",
+									Dto: &DataTransferObject{
+										Interface: entity.InformationAndReferral{},
+										Groups:    []string{"get"},
+									},
+								},
+								422: {
+									Description: "Serialization error",
+									Dto: &DataTransferObject{
+										Interface: util.HttpError{},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},

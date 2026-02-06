@@ -1,14 +1,19 @@
 package entity
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type Employee struct {
-	Id        uuid.UUID `gorm:"primaryKey;type:char(36)" json:"id"`
-	FirstName string    `gorm:"size:255;" json:"firstName"`
-	LastName  string    `gorm:"size:255;" json:"lastName"`
+	Id        uuid.UUID `gorm:"primaryKey;type:char(36)"`
+	FirstName string    `gorm:"size:255;not null"`
+	LastName  string    `gorm:"size:255;not null"`
+	Username  string    `gorm:"size:255;unique;not null"`
+	Email     string    `gorm:"size:255;"`
 
-	// optional/may remove
-
-	Username string `gorm:"size:255;" json:"username"`
-	Email    string `gorm:"size:255;" json:"email"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt time.Time
 }

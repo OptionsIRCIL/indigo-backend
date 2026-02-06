@@ -11,6 +11,14 @@ import (
 	"myoptions.info/indigo/backend/internal/schema/openApi"
 )
 
+func pascalToCamel(s string) string {
+	if len(s) < 2 {
+		return s
+	}
+
+	return strings.ToLower(string(s[0])) + s[1:]
+}
+
 func intersects[T comparable](a []T, b []T) bool {
 	for _, j := range a {
 		for _, k := range b {
@@ -46,8 +54,7 @@ func subtype(t reflect.Type, groups []string) reflect.Type {
 				// Ensure JSON key exists, else, create one in camelCase
 				_, hasJson := field.Tag.Lookup("json")
 				if !hasJson {
-					propertyName := strings.ToLower(string(field.Name[0])) + field.Name[1:]
-					field.Tag = reflect.StructTag(string(field.Tag) + ` json:"` + propertyName + `"`)
+					field.Tag = reflect.StructTag(string(field.Tag) + ` json:"` + pascalToCamel(field.Name) + `"`)
 				}
 
 				// Recursively subtype the property
@@ -157,7 +164,7 @@ func maskToOpenApiSchema(reflection reflect.Type) openApi.SchemaType {
 
 		for i := range reflection.NumField() {
 			field := reflection.Field(i)
-			properties[field.Name] = maskToOpenApiSchema(field.Type)
+			properties[pascalToCamel(field.Name)] = maskToOpenApiSchema(field.Type)
 		}
 
 		return openApi.SchemaType{
