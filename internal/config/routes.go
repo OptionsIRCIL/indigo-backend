@@ -219,6 +219,36 @@ func CreateMux(services Services) MuxWrapper {
 							},
 						},
 					},
+					Children: []RouterConfig{
+						{
+							Path: "/{id}",
+							Methods: []MethodConfig{
+								{
+									Method:  "GET",
+									Summary: "Get an information and referral record",
+									Handler: auth(c.PrimitiveGetOne[entity.InformationAndReferral](
+										services.Database,
+										[]string{"get"},
+									)),
+									Responses: map[int]Response{
+										200: {
+											Description: "I&R found",
+											Dto: &DataTransferObject{
+												Interface: entity.InformationAndReferral{},
+												Groups:    []string{"get"},
+											},
+										},
+										404: {
+											Description: "Not found",
+											Dto: &DataTransferObject{
+												Interface: util.HttpError{},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
