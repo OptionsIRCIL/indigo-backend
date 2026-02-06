@@ -7,18 +7,18 @@ import (
 )
 
 type Student struct {
-	Ssn       string `json:"ssn"`
-	FirstName string `json:"firstName" groups:"post,get"`
-	LastName  string `json:"lastName" groups:"post,get"`
+	Ssn       string
+	FirstName string `groups:"post,get"`
+	LastName  string `groups:"post,get"`
 }
 
 type Course struct {
-	Subject    string    `json:"subject" groups:"post"`
-	Number     string    `json:"number" groups:"post"` // Cry about it
-	Name       string    `json:"name" groups:"post"`
-	Sections   []int     `json:"sections" groups:"post"`
-	EnrollCode string    `json:"enrollCode"`
-	Students   []Student `json:"students" groups:"post"`
+	Subject    string `groups:"post"`
+	Number     string `groups:"post"` // Cry about it
+	Name       string `groups:"post"`
+	Sections   []int  `groups:"post"`
+	EnrollCode string
+	Students   []Student `groups:"post"`
 }
 
 func ExampleDeserialize() {

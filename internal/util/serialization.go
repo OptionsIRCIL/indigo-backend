@@ -43,6 +43,13 @@ func subtype(t reflect.Type, groups []string) reflect.Type {
 		if present {
 			props := strings.Split(tag, ",")
 			if intersects(props, groups) {
+				// Ensure JSON key exists, else, create one in camelCase
+				_, hasJson := field.Tag.Lookup("json")
+				if !hasJson {
+					propertyName := strings.ToLower(string(field.Name[0])) + field.Name[1:]
+					field.Tag = reflect.StructTag(string(field.Tag) + ` json:"` + propertyName + `"`)
+				}
+
 				// Recursively subtype the property
 				field.Type = subtype(field.Type, groups)
 
