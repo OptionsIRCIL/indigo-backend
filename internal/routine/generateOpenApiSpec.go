@@ -36,12 +36,12 @@ func getDtoName(dto *c.DataTransferObject) string {
 	return reflection.Name() + "." + suffix
 }
 
-func routerConfigToMethodsElement(path *c.RouterConfig, schemata map[string]openApi.SchemaType) map[string]openApi.Method {
+func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata map[string]openApi.SchemaType) map[string]openApi.Method {
 	methods := make(map[string]openApi.Method)
 
-	for _, method := range path.Methods {
+	for _, method := range config.Methods {
 		doc := openApi.Method{
-			Summary:     path.Path,
+			Summary:     path,
 			Description: method.Summary,
 			Responses:   make(map[string]openApi.Content),
 		}
@@ -100,7 +100,7 @@ func routerConfigWalk(node *c.RouterConfig, base string, schemata map[string]ope
 	nodes := make(map[string]map[string]openApi.Method)
 	path := util.PathConcat(base, node.Path)
 
-	nodes[path] = routerConfigToMethodsElement(node, schemata)
+	nodes[path] = routerConfigToMethodsElement(node, path, schemata)
 
 	for _, child := range node.Children {
 		maps.Copy(nodes, routerConfigWalk(&child, path, schemata))

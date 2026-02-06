@@ -180,6 +180,8 @@ func maskToOpenApiSchema(reflection reflect.Type) openApi.SchemaType {
 
 		for i := range reflection.NumField() {
 			field := reflection.Field(i)
+
+			// TODO: Inserting into map like this discards field order. Better way to do this?
 			properties[pascalToCamel(field.Name)] = maskToOpenApiSchema(field.Type)
 		}
 
