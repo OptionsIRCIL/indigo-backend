@@ -30,7 +30,7 @@ type InformationAndReferral struct {
 
 	EmployeeId     uuid.UUID `gorm:"type:char(36)" groups:"get,post"`
 	OrganizationId uuid.UUID `gorm:"type:char(36)" groups:"get,post"`
-	PersonId       uuid.UUID `gorm:"not null" groups:"get,post"`
+	PersonId       uuid.UUID `gorm:"type:char(36); not null" groups:"get,post"`
 
 	CreatedAt time.Time `groups:"get"`
 	UpdatedAt time.Time `groups:"get"`

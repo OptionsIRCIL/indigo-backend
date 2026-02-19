@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"gorm.io/gorm"
 )
 
 type Organization struct {
@@ -13,4 +14,9 @@ type Organization struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt time.Time
+}
+
+func (o *Organization) BeforeCreate(tx *gorm.DB) (err error) {
+	o.Id, err = uuid.NewRandom()
+	return err
 }
