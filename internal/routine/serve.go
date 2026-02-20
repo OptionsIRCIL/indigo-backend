@@ -8,57 +8,51 @@ import (
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
-	c "myoptions.info/indigo/backend/internal/config"
+	"myoptions.info/indigo/backend/internal/config"
+	c "myoptions.info/indigo/backend/internal/config/routes"
 	s "myoptions.info/indigo/backend/internal/service"
 	"myoptions.info/indigo/backend/internal/util"
 )
 
 // RunServe serves the application proper. Initializes all services and listens on either a port or a socket.
 func RunServe(flags util.ServeRuntimeFlags) int {
-	// Load environment
-	config := util.LoadConfig()
-	log.Println("Initialized in environment", config.IndigoEnv)
+	/*log.Println("Initialized in environment", config.IndigoEnv)
 	if config.IndigoEnv == "dev" {
 		log.Println(
 			"WARNING! Running in development mode removes various safeguards and encryption features.",
 			"If you intend to deploy this software in a production environment, please use INDIGO_ENV=prod.",
 		)
-	}
+	}*/
 
-	// Populate LdapConnection
-	l := s.LdapConnection{
-		Base:   config.LdapSearchBase,
-		Domain: config.LdapDomain,
-	}
-	l.SetUrl(config.LdapUrl)
-	l.SetCredentials(
-		config.LdapUsername,
-		config.LdapPassword,
-	)
+	// Populate LdapConnection (If applicable)
+	l := s.LdapConnection{}
+	if config.Config.Authentication.Ldap != nil {
+		l.Base = config.Config.Authentication.Ldap.SearchBase
+		l.Domain = config.Config.Authentication.Ldap.Domain
+		l.SetUrl(config.Config.Authentication.Ldap.Url)
+		l.SetCredentials(
+			config.Config.Authentication.Ldap.Username,
+			config.Config.Authentication.Ldap.Password,
+		)
 
-	// Initialize connection
-	err := l.Initialize()
-	if err != nil {
-		log.Fatal(err)
-	}
-	l.SetSecure((config.IndigoEnv == "prod") && !flags.AllowInsecureLdap)
-	defer l.Connection.Close()
-
-	// Initialize JWT & secret
-	jwtTransformer := s.JwtTransformer{}
-	jwtInitErr := jwtTransformer.SetSecret([]byte(config.IndigoSecret))
-	if jwtInitErr != nil {
-		log.Fatal(jwtInitErr)
+		// Initialize connection
+		err := l.Initialize()
+		if err != nil {
+			log.Fatal(err)
+		}
+		//l.SetSecure((config.IndigoEnv == "prod") && !flags.AllowInsecureLdap)
+		l.SetSecure(false)
+		defer l.Connection.Close()
 	}
 
 	// Configure GORM logger
 	newLogger := gormlogger.Default.LogMode(gormlogger.Silent)
-	if config.IndigoEnv == "dev" {
+	/*if config.IndigoEnv == "dev" {
 		newLogger = gormlogger.Default.LogMode(gormlogger.Info)
-	}
+	}*/
 
 	// Connect to MariaDB
-	database, err := gorm.Open(mysql.Open(config.DatabaseDsn), &gorm.Config{
+	database, err := gorm.Open(mysql.Open(config.Config.Database.Dsn), &gorm.Config{
 		Logger: newLogger,
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
@@ -68,7 +62,7 @@ func RunServe(flags util.ServeRuntimeFlags) int {
 	if err != nil {
 		log.Fatalf("FATAL: Could not connect to MariaDB database: %v", err)
 	}
-	log.Printf("Successfully connected to MariaDB: %s", "indigo_cil_dev")
+	log.Printf("Successfully connected to database")
 
 	// Run migrations
 	if err := util.RunMigrations(database); err != nil {
@@ -78,9 +72,7 @@ func RunServe(flags util.ServeRuntimeFlags) int {
 	// Create routes using MuxWrapper
 	mux := c.CreateMux(
 		c.Services{
-			Config:   config,
 			Ldap:     &l,
-			Jwt:      &jwtTransformer,
 			Flags:    flags,
 			Database: database,
 		},

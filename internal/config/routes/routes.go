@@ -1,4 +1,4 @@
-package config
+package routes
 
 import (
 	"fmt"
@@ -70,7 +70,7 @@ func (m *MuxWrapper) Initialize() {
 // that aggregates the various handler functions used in the application.
 func CreateMux(services Services) MuxWrapper {
 	auth := func(next http.HandlerFunc) http.HandlerFunc {
-		return middleware.RequireAuth(services.Jwt, services.Ldap, next)
+		return middleware.RequireAuth(services.Ldap, next)
 	}
 
 	mux := MuxWrapper{
@@ -106,12 +106,12 @@ func CreateMux(services Services) MuxWrapper {
 									},
 								},
 							},
-							Handler: c.AuthEntry(services.Config, services.Ldap, services.Jwt, services.Flags.AuthSameSite),
+							Handler: c.AuthEntry(services.Ldap, services.Database, services.Flags.AuthSameSite),
 						},
 						{
 							Method:  "DELETE",
 							Summary: "Delete current cookie",
-							Handler: c.DeleteCookie(services.Config),
+							Handler: c.DeleteCookie(),
 							Responses: map[int]Response{
 								204: {
 									Description: "yeag",
@@ -291,9 +291,7 @@ func (m *MuxWrapper) ServeToSocket(socket string, uid int, gid int) error {
 // Services is an aggregation of various tools that will be made available during assembly
 // of a routerConfig.
 type Services struct {
-	Config   *util.Config
 	Ldap     *s.LdapConnection
-	Jwt      *s.JwtTransformer
 	Flags    util.ServeRuntimeFlags
 	Database *gorm.DB
 }

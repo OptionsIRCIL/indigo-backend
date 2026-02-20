@@ -11,7 +11,6 @@ type Employee struct {
 	FirstName string    `gorm:"size:255;not null"`
 	LastName  string    `gorm:"size:255;not null"`
 	Username  string    `gorm:"size:255;unique;not null"`
-	Email     string    `gorm:"size:255;"`
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
