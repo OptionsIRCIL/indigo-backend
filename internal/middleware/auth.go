@@ -20,14 +20,15 @@ func RequireAuth(l *service.LdapConnection, next http.HandlerFunc) http.HandlerF
 		}
 
 		// Parse cookie
-		user, iat, err := crypto.ValidateToken(cookies[0].Value)
+		user, _, err := crypto.ValidateToken(cookies[0].Value)
 		if err != nil {
 			util.ThrowHttpStatus(w, 403)
 			return
 		}
 
 		// Verify iat > last password modification time
-		lastModifiedTime, ldapErr := l.FetchPwdLastSet(user.Username)
+		// TODO: Rework to support both LDAP and local expiry
+		/*lastModifiedTime, ldapErr := l.FetchPwdLastSet(user.Username)
 		if ldapErr != nil {
 			util.ThrowHttpUnhandled(w, ldapErr)
 			return
@@ -37,7 +38,7 @@ func RequireAuth(l *service.LdapConnection, next http.HandlerFunc) http.HandlerF
 			// For now, we'll just return a 401.
 			util.ThrowHttpStatus(w, 401)
 			return
-		}
+		}*/
 
 		// Add user to context and continue
 		ctx := context.WithValue(r.Context(), "user", user)

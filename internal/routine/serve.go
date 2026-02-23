@@ -4,10 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
-	gormlogger "gorm.io/gorm/logger"
-	"gorm.io/gorm/schema"
 	"myoptions.info/indigo/backend/internal/config"
 	c "myoptions.info/indigo/backend/internal/config/routes"
 	s "myoptions.info/indigo/backend/internal/service"
@@ -16,14 +12,6 @@ import (
 
 // RunServe serves the application proper. Initializes all services and listens on either a port or a socket.
 func RunServe(flags util.ServeRuntimeFlags) int {
-	/*log.Println("Initialized in environment", config.IndigoEnv)
-	if config.IndigoEnv == "dev" {
-		log.Println(
-			"WARNING! Running in development mode removes various safeguards and encryption features.",
-			"If you intend to deploy this software in a production environment, please use INDIGO_ENV=prod.",
-		)
-	}*/
-
 	// Populate LdapConnection (If applicable)
 	l := s.LdapConnection{}
 	if config.Config.Authentication.Ldap != nil {
@@ -45,36 +33,12 @@ func RunServe(flags util.ServeRuntimeFlags) int {
 		defer l.Connection.Close()
 	}
 
-	// Configure GORM logger
-	newLogger := gormlogger.Default.LogMode(gormlogger.Silent)
-	/*if config.IndigoEnv == "dev" {
-		newLogger = gormlogger.Default.LogMode(gormlogger.Info)
-	}*/
-
-	// Connect to MariaDB
-	database, err := gorm.Open(mysql.Open(config.Config.Database.Dsn), &gorm.Config{
-		Logger: newLogger,
-		NamingStrategy: schema.NamingStrategy{
-			SingularTable: true,
-			NoLowerCase:   false,
-		},
-	})
-	if err != nil {
-		log.Fatalf("FATAL: Could not connect to MariaDB database: %v", err)
-	}
-	log.Printf("Successfully connected to database")
-
-	// Run migrations
-	if err := util.RunMigrations(database); err != nil {
-		log.Fatalf("FATAL: Database migration failed: %v", err)
-	}
-
 	// Create routes using MuxWrapper
 	mux := c.CreateMux(
 		c.Services{
 			Ldap:     &l,
 			Flags:    flags,
-			Database: database,
+			Database: util.ConnectToDatabase(),
 		},
 	)
 

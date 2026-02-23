@@ -48,7 +48,7 @@ func VendToken(employee *entity.Employee) (string, error) {
 		},
 	}
 
-	return jwt.NewWithClaims(jwt.SigningMethodHS512, claims).SignedString(config.Config.Authentication.HmacKey)
+	return jwt.NewWithClaims(jwt.SigningMethodHS512, claims).SignedString([]byte(config.Config.Authentication.HmacKey))
 }
 
 func stringToToken(encodedToken string) (*claimSet, error) {
@@ -56,7 +56,7 @@ func stringToToken(encodedToken string) (*claimSet, error) {
 		encodedToken,
 		&claimSet{},
 		func(token *jwt.Token) (any, error) {
-			return config.Config.Authentication.HmacKey, nil
+			return []byte(config.Config.Authentication.HmacKey), nil
 		},
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Name}),
 		jwt.WithIssuer("indigo-backend"),

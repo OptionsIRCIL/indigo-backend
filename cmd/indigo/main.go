@@ -7,6 +7,7 @@ import (
 	"os"
 	"slices"
 
+	"github.com/go-playground/validator/v10"
 	"myoptions.info/indigo/backend/internal/routine"
 	"myoptions.info/indigo/backend/internal/util"
 )
@@ -17,7 +18,7 @@ func main() {
 	l.Println("Indigo CIL, v0.0.0")
 
 	// Check if valid subcommand exists
-	if len(os.Args) < 2 || !slices.Contains([]string{"serve", "generate_openapi_spec"}, os.Args[1]) {
+	if len(os.Args) < 2 || !slices.Contains([]string{"serve", "generate_openapi_spec", "create_user"}, os.Args[1]) {
 		// Drill down exact error to be a little more helpful
 		var preciseError string
 		if len(os.Args) < 2 {
@@ -33,7 +34,9 @@ Subcommands available:
   serve:
         Serves backend application on a port or Unix socket. View further options by passing the -help flag.
   generate_openapi_spec:
-        Generates an OpenAPI 3.1 spec in JSON format and dumps it to STDOUT.`,
+        Generates an OpenAPI 3.1 spec in JSON format and dumps it to STDOUT.
+  create_user:
+        Create a new user for the local handler.`,
 		)
 	}
 
@@ -57,5 +60,24 @@ Subcommands available:
 
 	case "generate_openapi_spec":
 		os.Exit(routine.RunGenerateOpenApiSpec())
+
+	case "create_user":
+		flags := util.CreateUserRuntimeFlags{}
+		set := flag.NewFlagSet("create_user", flag.ExitOnError)
+		set.StringVar(&flags.Username, "username", "", "desired username")
+		set.StringVar(&flags.Password, "password", "", "desired password")
+		set.StringVar(&flags.FirstName, "first", "", "first name")
+		set.StringVar(&flags.LastName, "last", "", "last name")
+
+		if err := set.Parse(os.Args[2:]); err != nil {
+			l.Fatalf("Could not parse arguments: %s\n", err)
+		}
+
+		v := validator.New()
+		if err := v.Struct(flags); err != nil {
+			l.Fatalf("Argument validation failed, see required syntax in -help\n%s", err)
+		}
+
+		os.Exit(routine.RunCreateUser(flags))
 	}
 }
