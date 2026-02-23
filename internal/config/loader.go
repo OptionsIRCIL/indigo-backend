@@ -11,7 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-const configLocation = "/var/indigo/config.json"
+const configLocation = "./config.json"
 
 // ApplicationConfig is used to store the application config in a global accessible to
 // all parts of the application.
