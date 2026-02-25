@@ -11,7 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-const configLocation = "./config.json"
+const defaultConfigLocation = "./config.json"
 
 // ApplicationConfig is used to store the application config in a global accessible to
 // all parts of the application.
@@ -59,9 +59,16 @@ func readConfig() *ApplicationConfig {
 		}
 	}
 
+	// Check if a config location has been provided via an environment variable
+	configLocation := os.Getenv("INDIGO_CONFIG_LOCATION")
+	if configLocation == "" {
+		configLocation = defaultConfigLocation
+	}
+
 	f, err := os.Open(configLocation)
 	if err != nil {
-		log.Fatalln("Failed to open config")
+		wdir, _ := os.Getwd()
+		log.Fatalf("Failed to opepn config.\nConfig Location: \"%s\"\nWorking Dir: \"%s\"", configLocation, wdir)
 	}
 	defer f.Close()
 
