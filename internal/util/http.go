@@ -15,6 +15,7 @@ type HttpError struct {
 var httpStatusDescriptions = map[int]string{
 	401: "Unauthorized",
 	403: "Forbidden",
+	404: "Not Found",
 	500: "Internal server error",
 }
 

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"strings"
 
-	c "myoptions.info/indigo/backend/internal/config"
+	c "myoptions.info/indigo/backend/internal/config/routes"
 	"myoptions.info/indigo/backend/internal/schema/openApi"
 	s "myoptions.info/indigo/backend/internal/service"
 	"myoptions.info/indigo/backend/internal/util"
@@ -135,9 +135,7 @@ func RunGenerateOpenApiSpec() int {
 	// Create routes using MuxWrapper. Provide dummy services.
 	mux := c.CreateMux(
 		c.Services{
-			Config: &util.Config{},
-			Ldap:   &s.LdapConnection{},
-			Jwt:    &s.JwtTransformer{},
+			Ldap: &s.LdapConnection{},
 		},
 	)
 

@@ -1,0 +1,16 @@
+{
+  "database": {
+    "dsn": "indigo:correct horse battery staple@tcp(db.example.com:3306)/indigo?charset=utf8mb4"
+  },
+  "authentication": {
+    "hmacKey": "this-property-is-required-and-must-be-at-least-64-characters-long",
+    "ldap": {
+      "url": "ldaps://dc1.example.com:636",
+      "searchBase": "CN=Users,DC=ad,DC=example,DC=com",
+      "domain": "AD",
+      "username": "CN=IndigoServiceAcct,CN=Users,DC=ad,DC=example,DC=com",
+      "password": "correct horse battery staple"
+    },
+    "local": {}
+  }
+}
