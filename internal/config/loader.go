@@ -68,7 +68,7 @@ func readConfig() *ApplicationConfig {
 	f, err := os.Open(configLocation)
 	if err != nil {
 		wdir, _ := os.Getwd()
-		log.Fatalf("Failed to opepn config.\nConfig Location: \"%s\"\nWorking Dir: \"%s\"", configLocation, wdir)
+		log.Fatalf("Failed to open config.\nConfig Location: \"%s\"\nWorking Dir: \"%s\"", configLocation, wdir)
 	}
 	defer f.Close()
 

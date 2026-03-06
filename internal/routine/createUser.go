@@ -14,7 +14,7 @@ func RunCreateUser(flags util.CreateUserRuntimeFlags) int {
 	database := util.ConnectToDatabase()
 	ctx := context.Background()
 
-	userCount, countErr := gorm.G[entity.LocalUser](database).Select("username = ?", flags.Username).Count(ctx, "username")
+	userCount, countErr := gorm.G[entity.LocalUser](database).Where("username = ?", flags.Username).Count(ctx, "username")
 	if countErr != nil {
 		log.Fatalf("Failed to count users: %s", countErr)
 	}
