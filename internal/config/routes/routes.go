@@ -128,6 +128,11 @@ func CreateMux(services Services) MuxWrapper {
 					Path: "/person",
 					Methods: []MethodConfig{
 						{
+							Method:  "GET",
+							Summary: "Get all persons",
+							Handler: auth(c.PrimitiveGetCollection[entity.Person](services.Database, []string{"get"})),
+						},
+						{
 							Method:  "POST",
 							Summary: "Create a new person",
 							InputDto: &DataTransferObject{
@@ -192,6 +197,11 @@ func CreateMux(services Services) MuxWrapper {
 				{
 					Path: "/information-and-referral",
 					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all Information and Referral entries",
+							Handler: auth(c.PrimitiveGetCollection[entity.InformationAndReferral](services.Database, []string{"get"})),
+						},
 						{
 							Method:  "POST",
 							Summary: "Create a new Information and Referral entry",
