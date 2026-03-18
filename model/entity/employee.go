@@ -9,9 +9,9 @@ import (
 
 type Employee struct {
 	Id        uuid.UUID `gorm:"primaryKey;type:char(36)"`
-	FirstName string    `gorm:"size:255;not null"`
-	LastName  string    `gorm:"size:255;not null"`
-	Username  string    `gorm:"size:255;uniqueIndex;not null"`
+	FirstName string    `gorm:"size:255;not null" groups:"get"`
+	LastName  string    `gorm:"size:255;not null" groups:"get"`
+	Username  string    `gorm:"size:255;uniqueIndex;not null" groups:"get"`
 
 	CreatedAt time.Time
 	UpdatedAt time.Time

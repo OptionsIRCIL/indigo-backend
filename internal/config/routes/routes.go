@@ -96,8 +96,12 @@ func CreateMux(services Services) MuxWrapper {
 								Interface: schema.LoginCredentials{},
 							},
 							Responses: map[int]Response{
-								204: {
+								200: {
 									Description: "Successful Authentication",
+									Dto: &DataTransferObject{
+										Interface: entity.Employee{},
+										Groups:    []string{"get"},
+									},
 								},
 								422: {
 									Description: "Invalid Credentials",

@@ -189,8 +189,8 @@ func AuthEntry(
 			HttpOnly: false,
 			SameSite: sameSiteHeader,
 		})
-		w.WriteHeader(204)
 
+		u.ReturnSerialized(w, 200, *employee, []string{"get"})
 		log.Printf("Authentication attempt successful for user: %s", payload.Username)
 	}
 }
