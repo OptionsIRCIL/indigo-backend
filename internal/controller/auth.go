@@ -90,7 +90,7 @@ func AuthEntry(
 
 	ldapAuthenticator := func(credentials UserCredentials) (*entity.Employee, error) {
 		// LDAP enabled?
-		if conn == nil {
+		if conn.Connection == nil {
 			return nil, AuthenticationError{Msg: "Authenticator not enabled"}
 		}
 
@@ -169,6 +169,7 @@ func AuthEntry(
 			ldapEmployee, ldapError := ldapAuthenticator(payload)
 			if ldapError != nil {
 				throwAuthenticationError(w)
+				return
 			}
 			employee = ldapEmployee
 		}
