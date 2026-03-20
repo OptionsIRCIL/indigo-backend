@@ -29,7 +29,7 @@ func ConnectToDatabase() *gorm.DB {
 		params.Add("parseTime", "True")
 	}
 
-	params.Encode()
+	dsn.RawQuery = params.Encode()
 
 	// Open connection
 	database, err := gorm.Open(mysql.Open(dsn.String()), &gorm.Config{
