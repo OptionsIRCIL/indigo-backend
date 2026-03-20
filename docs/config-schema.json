@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/OptionsIRCIL/indigo-backend/refs/heads/main/config.schema.json",
+  "title": "Indigo Backend Configuration Schema",
+  "type": "object",
+  "properties": {
+    "database": {
+      "type": "object",
+      "properties": {
+        "dsn": {
+          "type": "string",
+          "description": "Database configuration. Only supports MariaDB. See https://github.com/go-sql-driver/mysql#dsn-data-source-name.",
+          "examples": ["indigo:correct_horse_battery_staple@tcp(127.0.0.1)/indigo"]
+        }
+      },
+      "required": ["dsn"]
+    },
+    "authentication": {
+      "type": "object",
+      "minProperties": 2,
+      "properties": {
+        "hmacKey": {
+          "type": "string",
+          "description": "The HMAC512 secret used for signing/verifying JWTs. Must be at least 64 chars in length.",
+          "minLength": 64,
+          "examples": ["my_512_bit_secret_in_string_form_which_is_super_duper_secure_bro"]
+        },
+        "ldap": {
+          "type": "object",
+          "description": "Connect to an Active Directory domain for Single Sign-On",
+          "properties": {
+            "url": {
+              "type": "string",
+              "description": "The URL of your LDAP server",
+              "examples": ["ldaps://ad.example.com:636"]
+            },
+            "domain": {
+              "type": "string",
+              "description": "The domain prefix of your Active Directory instance. See https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/plan/assigning-domain-names.",
+              "examples": ["AD"]
+            },
+            "searchBase": {
+              "type": "string",
+              "description": "The search base to use when selecting users.",
+              "examples": ["CN=Users,DC=ad,DC=example,DC=com"]
+            },
+            "username": {
+              "type": "string",
+              "description": "The username of an LDAP account with permissions to query user information.",
+              "examples": ["CN=IndigoService,CN=Users,DC=ad,DC=example,DC=com"]
+            },
+            "password": {
+              "type": "string",
+              "description": "The service account's password.",
+              "examples": ["correct horse battery staple"]
+            }
+          },
+          "required": ["url", "domain", "searchBase", "username", "password"]
+        },
+        "local": {
+          "type": "object",
+          "properties": {}
+        }
+      },
+      "required": ["hmacKey"]
+    }
+  },
+  "required": ["database", "authentication"]
+}

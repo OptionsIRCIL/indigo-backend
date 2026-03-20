@@ -1,15 +1,13 @@
-package service
+package crypto
 
 import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"myoptions.info/indigo/backend/internal/config"
+	"myoptions.info/indigo/backend/internal/service"
+	"myoptions.info/indigo/backend/model/entity"
 )
-
-// A JwtTransformer is a basic carrier for an HMAC512 secret. The secret holds private visibility.
-type JwtTransformer struct {
-	secret []byte
-}
 
 // A JwtFailure is returned when a method of [JwtTransformer] fails in either a fatal or non-fatal fashion.
 type JwtFailure struct {
@@ -32,48 +30,33 @@ func (j *JwtFailure) Error() string {
 	return j.Msg
 }
 
-// SetSecret sets the secret of a [JwtTransformer]. If the secret provided is too
-// short, a fatal [JwtFailure] is returned.
-func (j *JwtTransformer) SetSecret(secret []byte) error {
-	if len(secret) < 64 {
-		return &JwtFailure{"Secret too short!", true}
-	}
-
-	j.secret = secret
-	return nil
-}
-
 // VendToken vends a new JWT given an [LdapUser]. The returned string is a signed JWT that is
 // safe to return to the user.
-func (j *JwtTransformer) VendToken(user LdapUser) (string, error) {
-	if len(j.secret) < 64 {
-		return "", &JwtFailure{"Secret too short!", true}
-	}
-
+func VendToken(employee *entity.Employee) (string, error) {
 	// https://www.iana.org/assignments/jwt/jwt.xhtml#claims
 	claims := &claimSet{
-		FirstName: user.FirstName,
-		LastName:  user.LastName,
-		Groups:    user.Groups,
+		FirstName: employee.FirstName,
+		LastName:  employee.LastName,
+		Groups:    []string{},
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(10 * time.Hour)),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "indigo-backend",
-			Subject:   user.Username,
+			Subject:   employee.Username,
 			Audience:  []string{"indigo-backend", "indigo-frontend"},
 		},
 	}
 
-	return jwt.NewWithClaims(jwt.SigningMethodHS512, claims).SignedString(j.secret)
+	return jwt.NewWithClaims(jwt.SigningMethodHS512, claims).SignedString([]byte(config.Config.Authentication.HmacKey))
 }
 
-func (j *JwtTransformer) stringToToken(encodedToken string) (*claimSet, error) {
+func stringToToken(encodedToken string) (*claimSet, error) {
 	token, tokenErr := jwt.ParseWithClaims(
 		encodedToken,
 		&claimSet{},
 		func(token *jwt.Token) (any, error) {
-			return j.secret, nil
+			return []byte(config.Config.Authentication.HmacKey), nil
 		},
 		jwt.WithValidMethods([]string{jwt.SigningMethodHS512.Name}),
 		jwt.WithIssuer("indigo-backend"),
@@ -100,13 +83,13 @@ func (j *JwtTransformer) stringToToken(encodedToken string) (*claimSet, error) {
 // accepted method is HS512. iat and exp claims are also required. Does NOT verify that the token
 // iat is larger than the user's last password change time but rather returns it as the second
 // returned value.
-func (j *JwtTransformer) ValidateToken(encodedToken string) (*LdapUser, int64, error) {
-	claims, err := j.stringToToken(encodedToken)
+func ValidateToken(encodedToken string) (*service.LdapUser, int64, error) {
+	claims, err := stringToToken(encodedToken)
 	if err != nil {
 		return nil, -1, err
 	}
 
-	return &LdapUser{
+	return &service.LdapUser{
 		FirstName: claims.FirstName,
 		LastName:  claims.LastName,
 		Username:  claims.Subject,
