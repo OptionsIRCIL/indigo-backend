@@ -2,6 +2,7 @@ package util
 
 import (
 	"log"
+	"net/url"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -13,7 +14,25 @@ import (
 
 // ConnectToDatabase connects to a MariaDB database and performs any needed migrations.
 func ConnectToDatabase() *gorm.DB {
-	database, err := gorm.Open(mysql.Open(config.Config.Database.Dsn), &gorm.Config{
+	// Parse charset and parseTime into URL params
+	dsn, err := url.Parse(config.Config.Database.Dsn)
+	if err != nil {
+		log.Fatalf("Failed to read DSN: %s", err)
+	}
+	params := dsn.Query()
+
+	if !params.Has("charset") {
+		params.Add("charset", "utf8mb4")
+	}
+
+	if !params.Has("parseTime") {
+		params.Add("parseTime", "True")
+	}
+
+	params.Encode()
+
+	// Open connection
+	database, err := gorm.Open(mysql.Open(dsn.String()), &gorm.Config{
 		Logger: gormlogger.Default.LogMode(gormlogger.Info),
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
@@ -24,9 +43,7 @@ func ConnectToDatabase() *gorm.DB {
 	if err != nil {
 		log.Fatalf("Could not connect to MariaDB database: %v", err)
 	}
-	log.Printf("Successfully connected to database")
-
-	log.Println("Starting database migration...")
+	log.Println("Successfully connected to database. Starting migration...")
 
 	// all model mapped to database
 	err = database.AutoMigrate(
