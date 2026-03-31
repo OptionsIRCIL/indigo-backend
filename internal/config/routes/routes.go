@@ -264,6 +264,116 @@ func CreateMux(services Services) MuxWrapper {
 						},
 					},
 				},
+				{
+					Path: "/employee",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all employees",
+							Handler: auth(c.PrimitiveGetCollection[entity.Employee](services.Database, []string{"get"})),
+						},
+					},
+				},
+				{
+					Path: "/community-service-event",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all community service events",
+							Handler: auth(c.PrimitiveGetCollection[entity.CommunityServiceEvent](services.Database, []string{"get"})),
+						},
+					},
+				},
+				{
+					Path: "/consumer-service",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all consumer services",
+							Handler: auth(c.PrimitiveGetCollection[entity.ConsumerService](services.Database, []string{"get"})),
+						},
+					},
+				},
+				{
+					Path: "/services-offered",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all services offered",
+							Handler: auth(c.PrimitiveGetCollection[entity.ServicesOffered](services.Database, []string{"get"})),
+						},
+					},
+				},
+				{
+					Path: "/organization",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all organizations",
+							Handler: auth(c.PrimitiveGetCollection[entity.Organization](services.Database, []string{"get"})),
+						},
+					},
+				},
+				{
+					Path: "/place",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all places",
+							Handler: auth(c.PrimitiveGetCollection[entity.Place](services.Database, []string{"get"})),
+						},
+					},
+				},
+				{
+					Path: "/record-def",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all record definitions",
+							Handler: auth(c.PrimitiveGetCollection[entity.RecordDef](services.Database, []string{"get"})),
+						},
+					},
+				},
+				{
+					Path: "/address-phone",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all address and phone records",
+							Handler: auth(c.PrimitiveGetCollection[entity.AddressPhone](services.Database, []string{"get"})),
+						},
+					},
+				},
+				{
+					Path: "/alias",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all aliases",
+							Handler: auth(c.PrimitiveGetCollection[entity.Alias](services.Database, []string{"get"})),
+						},
+					},
+				},
+				{
+					Path: "/disability-information",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all disability info records",
+							Handler: auth(c.PrimitiveGetCollection[entity.DisabilityInfo](services.Database, []string{"get"})),
+						},
+					},
+				},
+				{
+					Path: "/goals",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all goals",
+							Handler: auth(c.PrimitiveGetCollection[entity.Goal](services.Database, []string{"get"})),
+						},
+					},
+				},
 			},
 		},
 	}
