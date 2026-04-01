@@ -100,6 +100,10 @@ func routerConfigWalk(node *c.RouterConfig, base string, schemata map[string]ope
 	nodes := make(map[string]map[string]openApi.Method)
 	path := util.PathConcat(base, node.Path)
 
+	for _, sub := range node.PathValueSubstitutions {
+		path = strings.Replace(path, "{"+sub.Original+"}", "{"+sub.New+"}", 1)
+	}
+
 	nodes[path] = routerConfigToMethodsElement(node, path, schemata)
 
 	for _, child := range node.Children {

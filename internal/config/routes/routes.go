@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 
 	"gorm.io/gorm"
 	"myoptions.info/indigo/backend/internal/middleware"
@@ -41,6 +42,11 @@ func generateCrudRoutes[T interface{}](database *gorm.DB, path string) RouterCon
 func (m *MuxWrapper) registerRouterNode(node RouterConfig, parentPath string) {
 	// Concat the parent path with this node's path for fully-qualified path
 	path := util.PathConcat(parentPath, node.Path)
+
+	// Perform any needed substitutions
+	for _, sub := range node.PathValueSubstitutions {
+		path = strings.Replace(path, "{"+sub.Original+"}", "{"+sub.New+"}", 1)
+	}
 
 	// Register path to declared operations in router and collect list of methods
 	methods := make([]string, len(node.Methods))
@@ -251,6 +257,43 @@ func CreateMux(services Services) MuxWrapper {
 									},
 								},
 							},
+							Children: []RouterConfig{
+								{
+									Path: "/effort",
+									PathValueSubstitutions: []PathValueSubstitution{
+										{
+											Original: "id",
+											New:      "informationAndReferralId",
+										},
+									},
+									Methods: []MethodConfig{
+										{
+											Method:  "POST",
+											Summary: "Log effort to an Information and Referral record",
+											InputDto: &DataTransferObject{
+												Interface: entity.InformationAndReferralEffort{},
+												Groups:    []string{"post"},
+											},
+											Handler: auth(c.InformationAndReferralEffortPost(services.Database)),
+											Responses: map[int]Response{
+												201: {
+													Description: "Effort log successfully created",
+													Dto: &DataTransferObject{
+														Interface: entity.InformationAndReferralEffort{},
+														Groups:    []string{"get"},
+													},
+												},
+												422: {
+													Description: "Serialization error",
+													Dto: &DataTransferObject{
+														Interface: util.HttpError{},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -327,10 +370,18 @@ type MethodConfig struct {
 	Handler   http.HandlerFunc
 }
 
+// A PathValueSubstitution may be used to rewrite PathValue keys in parent routes. Particularly
+// useful if using PathValue keys as foreign keys.
+type PathValueSubstitution struct {
+	Original string
+	New      string
+}
+
 // RouterConfig defines each route added to the application.
 // TODO: Middleware?
 type RouterConfig struct {
-	Path     string         `json:"path"`               // The Path to assign methods to.
-	Methods  []MethodConfig `json:"methods"`            // What to do for each available HTTP method.
-	Children []RouterConfig `json:"children,omitempty"` // Each child will inherit the parent's Path.
+	Path                   string                  // The Path to assign methods to.
+	PathValueSubstitutions []PathValueSubstitution // Any substitutions to apply to previously specified PathValues.
+	Methods                []MethodConfig          // What to do for each available HTTP method.
+	Children               []RouterConfig          // Each child will inherit the parent's Path.
 }
