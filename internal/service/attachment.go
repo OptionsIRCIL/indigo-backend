@@ -8,13 +8,9 @@ import (
 	"regexp"
 	"slices"
 	"strings"
-)
 
-// AttachmentManager is a struct used to abstract away file storage and retrieval for attachments.
-type AttachmentManager struct {
-	acceptableMimes     []string
-	attachmentDirectory string
-}
+	"myoptions.info/indigo/backend/internal/config"
+)
 
 // AttachmentError is a generic error for issues encountered when handling attachment storage or retrieval.
 type AttachmentError struct {
@@ -46,57 +42,40 @@ func getContentType(content []byte) string {
 	return strings.Split(http.DetectContentType(content), ";")[0]
 }
 
-// SetAcceptableMimes sets the list of allowed mimetypes for uploaded attachments.
-func (a *AttachmentManager) SetAcceptableMimes(mimes []string) {
-	a.acceptableMimes = mimes
-}
-
-// SetAttachmentDirectory sets the directory where attachment data will be
-// written and read from.
-func (a *AttachmentManager) SetAttachmentDirectory(dir string) error {
-	absolute, err := filepath.Abs(dir)
-	if err != nil {
-		return err
-	}
-
-	a.attachmentDirectory = absolute
-	return nil
-}
-
 // StoreFile checks an uploaded file for safety (file name, mime type, extension) and
 // writes it to the local file system. id is used as the file name and the extension
-// is omitted from the destination file name.
-func (a *AttachmentManager) StoreFile(id string, name string, contents []byte) error {
+// is omitted from the destination file name. Returns the detected mime or an error
+func StoreFile(id string, name string, contents []byte) (string, error) {
 	extension, valid := filenameValid(name)
 	if !valid {
-		return AttachmentError{"Filename invalid"}
+		return "", AttachmentError{"Filename invalid"}
 	}
 
 	mimetype := getContentType(contents)
-	if !slices.Contains(a.acceptableMimes, mimetype) {
-		return AttachmentError{"Invalid mimetype"}
+	if !slices.Contains(config.Config.Attachments.PermissibleMimeTypes, mimetype) {
+		return "", AttachmentError{"Invalid mimetype"}
 	}
 
 	validExtensions, mimeErr := mime.ExtensionsByType(mimetype)
 	if mimeErr != nil {
-		return mimeErr
+		return "", mimeErr
 	}
 
 	if !slices.Contains(validExtensions, extension) {
-		return AttachmentError{"Extension mismatch"}
+		return "", AttachmentError{"Extension mismatch"}
 	}
 
 	// TODO: collision testing? extremely unlikely that the same UUID would be drawn twice, though
 	writeErr := os.WriteFile(
-		filepath.Join(a.attachmentDirectory, id),
+		filepath.Join(config.Config.Attachments.Directory, id),
 		contents,
-		660,
+		0660,
 	)
-	return writeErr
+	return mimetype, writeErr
 }
 
 // RetrieveFile fetches a file from the filesystem given its ID.
-func (a *AttachmentManager) RetrieveFile(id string) ([]byte, error) {
+func RetrieveFile(id string) ([]byte, error) {
 	// TODO: hook in with gorm?
-	return os.ReadFile(filepath.Join(a.attachmentDirectory, id))
+	return os.ReadFile(filepath.Join(config.Config.Attachments.Directory, id))
 }

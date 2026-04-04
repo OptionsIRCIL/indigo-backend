@@ -47,21 +47,28 @@ func ConnectToDatabase() *gorm.DB {
 
 	// all model mapped to database
 	err = database.AutoMigrate(
+		// Core entities
 		&entity.Employee{},
 		&entity.LocalUser{},
-		&entity.Organization{},
-		&entity.Person{},
-		&entity.Place{},
-		&entity.RecordDef{},
+		&entity.Grant{},
 
+		// People
+		&entity.Person{},
 		&entity.Alias{},
 		&entity.Goal{},
-		&entity.ConsumerService{},
-		&entity.InformationAndReferral{},
-		&entity.ServicesOffered{},
 		&entity.DisabilityInfo{},
-
 		&entity.AddressPhone{},
+
+		// Organizations
+		&entity.Organization{},
+		&entity.ServicesOffered{},
+		&entity.ConsumerService{},
+
+		// Information and Referral AKA Community Navigation AKA I&R AKA...
+		&entity.InformationAndReferral{},
+		&entity.InformationAndReferralEffort{},
+		&entity.InformationAndReferralAttachment{},
+
 		&entity.CommunityServiceEvent{},
 	)
 

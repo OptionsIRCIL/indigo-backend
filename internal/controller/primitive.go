@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"gorm.io/gorm"
 	"myoptions.info/indigo/backend/internal/util"
@@ -62,13 +63,47 @@ func PrimitiveGetCollection[E interface{}](database *gorm.DB, serializationGroup
 	// TODO: Allowed properties for filtering?
 	// TODO: Query parameter parsing
 	// TODO: Database query
+
+	/*
+		Should look like this in URL:
+		### Get the first 10 people
+		GET http://localhost:8080/person?page=1&limit=10
+		### Get the next 10 people
+		GET http://localhost:8080/person?page=2&limit=10
+	*/
 	return func(w http.ResponseWriter, r *http.Request) {
 		var entities []E
-		// Supports basic query filtering so we can expand later
-		if err := database.Find(&entities).Error; err != nil {
+
+		// read Pagination Parameters
+		// .Get() returns an empty string if the key doesn't exist
+		query := r.URL.Query()
+
+		pageStr := query.Get("page")
+		limitStr := query.Get("limit")
+
+		// Convert strings to ints
+		page, err := strconv.Atoi(pageStr)
+		if err != nil || page <= 0 {
+			page = 1
+		}
+
+		limit, err := strconv.Atoi(limitStr)
+		if err != nil || limit <= 0 {
+			limit = 20 // Default page size
+		} else if limit > 100 {
+			limit = 100 // hard cap just in case/for testing
+		}
+
+		// Page 1 = Offset 0, Page 2 = Offset (Limit)
+		offset := (page - 1) * limit
+
+		// query
+		// uses GORM .limit and .offset
+		if err := database.Limit(limit).Offset(offset).Find(&entities).Error; err != nil {
 			util.ThrowHttpUnhandled(w, err)
 			return
 		}
+
 		util.ReturnSerialized(w, 200, entities, serializationGroups)
 	}
 }

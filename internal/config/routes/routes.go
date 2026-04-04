@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strings"
 
 	"gorm.io/gorm"
 	"myoptions.info/indigo/backend/internal/middleware"
@@ -41,6 +42,11 @@ func generateCrudRoutes[T interface{}](database *gorm.DB, path string) RouterCon
 func (m *MuxWrapper) registerRouterNode(node RouterConfig, parentPath string) {
 	// Concat the parent path with this node's path for fully-qualified path
 	path := util.PathConcat(parentPath, node.Path)
+
+	// Perform any needed substitutions
+	for _, sub := range node.PathValueSubstitutions {
+		path = strings.Replace(path, "{"+sub.Original+"}", "{"+sub.New+"}", 1)
+	}
 
 	// Register path to declared operations in router and collect list of methods
 	methods := make([]string, len(node.Methods))
@@ -128,6 +134,19 @@ func CreateMux(services Services) MuxWrapper {
 					Path: "/person",
 					Methods: []MethodConfig{
 						{
+							Method:  "GET",
+							Summary: "Get all persons",
+							Handler: auth(c.PrimitiveGetCollection[entity.Person](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.Person{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
+						},
+						{
 							Method:  "POST",
 							Summary: "Create a new person",
 							InputDto: &DataTransferObject{
@@ -193,6 +212,19 @@ func CreateMux(services Services) MuxWrapper {
 					Path: "/information-and-referral",
 					Methods: []MethodConfig{
 						{
+							Method:  "GET",
+							Summary: "Get all Information and Referral entries",
+							Handler: auth(c.PrimitiveGetCollection[entity.InformationAndReferral](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.InformationAndReferral{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
+						},
+						{
 							Method:  "POST",
 							Summary: "Create a new Information and Referral entry",
 							InputDto: &DataTransferObject{
@@ -248,6 +280,220 @@ func CreateMux(services Services) MuxWrapper {
 												Interface: util.HttpError{},
 											},
 										},
+									},
+								},
+							},
+							Children: []RouterConfig{
+								{
+									Path: "/effort",
+									PathValueSubstitutions: []PathValueSubstitution{
+										{
+											Original: "id",
+											New:      "informationAndReferralId",
+										},
+									},
+									Methods: []MethodConfig{
+										{
+											Method:  "POST",
+											Summary: "Log effort to an Information and Referral record",
+											InputDto: &DataTransferObject{
+												Interface: entity.InformationAndReferralEffort{},
+												Groups:    []string{"post"},
+											},
+											Handler: auth(c.InformationAndReferralEffortPost(services.Database)),
+											Responses: map[int]Response{
+												201: {
+													Description: "Effort log successfully created",
+													Dto: &DataTransferObject{
+														Interface: entity.InformationAndReferralEffort{},
+														Groups:    []string{"get"},
+													},
+												},
+												422: {
+													Description: "Serialization error",
+													Dto: &DataTransferObject{
+														Interface: util.HttpError{},
+													},
+												},
+											},
+										},
+									},
+								},
+								{
+									Path: "/attachment",
+									PathValueSubstitutions: []PathValueSubstitution{
+										{
+											Original: "id",
+											New:      "informationAndReferralId",
+										},
+									},
+									Methods: []MethodConfig{
+										{
+											Method:       "POST",
+											Summary:      "Create a new Information and Referral attachment",
+											IsAttachment: true,
+											Handler:      auth(c.InformationAndReferralAttachmentPost(services.Database)),
+											Responses: map[int]Response{
+												200: {
+													Description: "Attachment successfully created",
+													Dto: &DataTransferObject{
+														Interface: entity.InformationAndReferralAttachment{},
+														Groups:    []string{"get"},
+													},
+												},
+												422: {
+													Description: "Serialization error",
+													Dto: &DataTransferObject{
+														Interface: util.HttpError{},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Path: "/information-and-referral-attachment/{id}",
+					Methods: []MethodConfig{
+						{
+							Method:  "HEAD",
+							Summary: "Get attachment details",
+							Handler: auth(c.InformationAndReferralAttachmentGet(services.Database)),
+							Responses: map[int]Response{
+								200: {
+									Description: "File details",
+								},
+								404: {
+									Description: "Not found",
+									Dto: &DataTransferObject{
+										Interface: util.HttpError{},
+									},
+								},
+							},
+						},
+						{
+							Method:  "GET",
+							Summary: "Get attachment details",
+							Handler: auth(c.InformationAndReferralAttachmentGet(services.Database)),
+							Responses: map[int]Response{
+								200: {
+									Description: "File contents",
+								},
+								404: {
+									Description: "Not found",
+									Dto: &DataTransferObject{
+										Interface: util.HttpError{},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Path: "/employee",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all employees",
+							Handler: auth(c.PrimitiveGetCollection[entity.Employee](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.Employee{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Path: "/community-service-event",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all community service events",
+							Handler: auth(c.PrimitiveGetCollection[entity.CommunityServiceEvent](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.CommunityServiceEvent{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Path: "/consumer-service",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all consumer services",
+							Handler: auth(c.PrimitiveGetCollection[entity.ConsumerService](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.ConsumerService{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Path: "/organization",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all organizations",
+							Handler: auth(c.PrimitiveGetCollection[entity.Organization](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.Organization{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Path: "/place",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all places",
+							Handler: auth(c.PrimitiveGetCollection[entity.Place](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.Place{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
+						},
+					},
+				},
+				{
+					Path: "/record-def",
+					Methods: []MethodConfig{
+						{
+							Method:  "GET",
+							Summary: "Get all record definitions",
+							Handler: auth(c.PrimitiveGetCollection[entity.RecordDef](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.RecordDef{},
+										Groups:    []string{"get"},
 									},
 								},
 							},
@@ -314,23 +560,33 @@ type DataTransferObject struct {
 }
 
 type Response struct {
-	Description string
-	Dto         *DataTransferObject
+	Description  string
+	IsAttachment bool
+	Dto          *DataTransferObject
 }
 
 // MethodConfig defines the behavior that a mux should follow for a Method invoked on a given route.
 type MethodConfig struct {
-	Method    string
-	Summary   string
-	InputDto  *DataTransferObject
-	Responses map[int]Response
-	Handler   http.HandlerFunc
+	Method       string
+	Summary      string
+	IsAttachment bool // If set, the content type is set to multipart/form-data with a single key "attachment"
+	InputDto     *DataTransferObject
+	Responses    map[int]Response
+	Handler      http.HandlerFunc
+}
+
+// A PathValueSubstitution may be used to rewrite PathValue keys in parent routes. Particularly
+// useful if using PathValue keys as foreign keys.
+type PathValueSubstitution struct {
+	Original string
+	New      string
 }
 
 // RouterConfig defines each route added to the application.
 // TODO: Middleware?
 type RouterConfig struct {
-	Path     string         `json:"path"`               // The Path to assign methods to.
-	Methods  []MethodConfig `json:"methods"`            // What to do for each available HTTP method.
-	Children []RouterConfig `json:"children,omitempty"` // Each child will inherit the parent's Path.
+	Path                   string                  // The Path to assign methods to.
+	PathValueSubstitutions []PathValueSubstitution // Any substitutions to apply to previously specified PathValues.
+	Methods                []MethodConfig          // What to do for each available HTTP method.
+	Children               []RouterConfig          // Each child will inherit the parent's Path.
 }

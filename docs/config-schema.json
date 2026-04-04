@@ -63,6 +63,38 @@
         }
       },
       "required": ["hmacKey"]
+    },
+    "attachments": {
+      "type": "object",
+      "description": "Configuration for attachment restrictions.",
+      "properties": {
+        "directory": {
+          "type": "string",
+          "description": "Folder for attachment storage.",
+          "default": "/srv/indigo if it exists and is accessible, otherwise ./attachments."
+        },
+        "permissibleMimeTypes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "A set of mimetypes to restrict file uploads to. An empty set allows all types.",
+          "default": "Office Documents (docx, xlsx, pptx, and ODF counterparts), PDFs, PNGs, and JPEGs.",
+          "examples": [
+            [
+              "application/pdf",
+              "application/epub+zip",
+              "text/markdown"
+            ]
+          ]
+        },
+        "maxFileSize": {
+          "type": "integer",
+          "description": "The maximum attachment file size in bytes.",
+          "default": "10MB (10000000 bytes).",
+          "minimum": 1
+        }
+      }
     }
   },
   "required": ["database", "authentication"]
