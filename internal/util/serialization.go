@@ -173,7 +173,8 @@ func maskToOpenApiSchema(reflection reflect.Type) openApi.SchemaType {
 	case reflect.Bool:
 		return openApi.SchemaType{Type: "boolean"}
 	case reflect.Slice:
-		return openApi.SchemaType{Type: "array"}
+		mask := maskToOpenApiSchema(reflection.Elem())
+		return openApi.SchemaType{Type: "array", Items: &mask}
 	case reflect.Interface, reflect.Struct:
 		// We'll need to iterate over each property
 		properties := make(map[string]openApi.SchemaType)

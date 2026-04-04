@@ -25,15 +25,20 @@ func getDtoName(dto *c.DataTransferObject) string {
 		return "unknown"
 	}
 
+	name := reflection.Name()
+	if reflection.Kind() == reflect.Slice {
+		name = "array_" + reflection.Elem().Name()
+	}
+
 	if dto.Groups == nil || len(dto.Groups) == 0 {
-		return reflection.Name()
+		return name
 	}
 
 	sorted := slices.Clone(dto.Groups)
 	slices.Sort(sorted)
 	suffix := strings.Join(sorted, ".")
 
-	return reflection.Name() + "." + suffix
+	return name + "." + suffix
 }
 
 func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata map[string]openApi.SchemaType) map[string]openApi.Method {

@@ -137,6 +137,14 @@ func CreateMux(services Services) MuxWrapper {
 							Method:  "GET",
 							Summary: "Get all persons",
 							Handler: auth(c.PrimitiveGetCollection[entity.Person](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.Person{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
 						},
 						{
 							Method:  "POST",
@@ -207,6 +215,14 @@ func CreateMux(services Services) MuxWrapper {
 							Method:  "GET",
 							Summary: "Get all Information and Referral entries",
 							Handler: auth(c.PrimitiveGetCollection[entity.InformationAndReferral](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.InformationAndReferral{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
 						},
 						{
 							Method:  "POST",
@@ -383,6 +399,14 @@ func CreateMux(services Services) MuxWrapper {
 							Method:  "GET",
 							Summary: "Get all employees",
 							Handler: auth(c.PrimitiveGetCollection[entity.Employee](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.Employee{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -393,6 +417,14 @@ func CreateMux(services Services) MuxWrapper {
 							Method:  "GET",
 							Summary: "Get all community service events",
 							Handler: auth(c.PrimitiveGetCollection[entity.CommunityServiceEvent](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.CommunityServiceEvent{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -403,16 +435,14 @@ func CreateMux(services Services) MuxWrapper {
 							Method:  "GET",
 							Summary: "Get all consumer services",
 							Handler: auth(c.PrimitiveGetCollection[entity.ConsumerService](services.Database, []string{"get"})),
-						},
-					},
-				},
-				{
-					Path: "/services-offered",
-					Methods: []MethodConfig{
-						{
-							Method:  "GET",
-							Summary: "Get all services offered",
-							Handler: auth(c.PrimitiveGetCollection[entity.ServicesOffered](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.ConsumerService{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -423,6 +453,14 @@ func CreateMux(services Services) MuxWrapper {
 							Method:  "GET",
 							Summary: "Get all organizations",
 							Handler: auth(c.PrimitiveGetCollection[entity.Organization](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.Organization{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -433,6 +471,14 @@ func CreateMux(services Services) MuxWrapper {
 							Method:  "GET",
 							Summary: "Get all places",
 							Handler: auth(c.PrimitiveGetCollection[entity.Place](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.Place{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -443,46 +489,14 @@ func CreateMux(services Services) MuxWrapper {
 							Method:  "GET",
 							Summary: "Get all record definitions",
 							Handler: auth(c.PrimitiveGetCollection[entity.RecordDef](services.Database, []string{"get"})),
-						},
-					},
-				},
-				{
-					Path: "/address-phone",
-					Methods: []MethodConfig{
-						{
-							Method:  "GET",
-							Summary: "Get all address and phone records",
-							Handler: auth(c.PrimitiveGetCollection[entity.AddressPhone](services.Database, []string{"get"})),
-						},
-					},
-				},
-				{
-					Path: "/alias",
-					Methods: []MethodConfig{
-						{
-							Method:  "GET",
-							Summary: "Get all aliases",
-							Handler: auth(c.PrimitiveGetCollection[entity.Alias](services.Database, []string{"get"})),
-						},
-					},
-				},
-				{
-					Path: "/disability-information",
-					Methods: []MethodConfig{
-						{
-							Method:  "GET",
-							Summary: "Get all disability info records",
-							Handler: auth(c.PrimitiveGetCollection[entity.DisabilityInfo](services.Database, []string{"get"})),
-						},
-					},
-				},
-				{
-					Path: "/goals",
-					Methods: []MethodConfig{
-						{
-							Method:  "GET",
-							Summary: "Get all goals",
-							Handler: auth(c.PrimitiveGetCollection[entity.Goal](services.Database, []string{"get"})),
+							Responses: map[int]Response{
+								200: {
+									Dto: &DataTransferObject{
+										Interface: []entity.RecordDef{},
+										Groups:    []string{"get"},
+									},
+								},
+							},
 						},
 					},
 				},
