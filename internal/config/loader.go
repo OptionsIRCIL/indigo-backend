@@ -66,7 +66,12 @@ type AttachmentConfigNode struct {
 	MaxFileSize          uint     `json:"maxFileSize,omitempty"`
 }
 
-func readConfig() *ApplicationConfig {
+// Config provides global access to application configuration.
+// InitializeConfig must be run before any values can be accessed.
+// I personally will kill you if you modify this at runtime.
+var Config *ApplicationConfig
+
+func InitializeConfig() {
 	// Check if in a unit test
 	// TODO: Optimize out in production build?
 	if testing.Testing() {
@@ -77,7 +82,7 @@ func readConfig() *ApplicationConfig {
 			log.Fatalln(err)
 		}
 
-		return &ApplicationConfig{
+		Config = &ApplicationConfig{
 			Authentication: &AuthenticationConfigNode{
 				HmacKey: string(secret),
 			},
@@ -86,6 +91,7 @@ func readConfig() *ApplicationConfig {
 				PermissibleMimeTypes: defaultPermissibleMimeTypes,
 			},
 		}
+		return
 	}
 
 	// Check if a config location has been provided via an environment variable
@@ -157,9 +163,5 @@ func readConfig() *ApplicationConfig {
 		config.Attachments.PermissibleMimeTypes = defaultPermissibleMimeTypes
 	}
 
-	return config
+	Config = config
 }
-
-// Config provides global access to application configuration.
-// I personally will kill you if you modify this at runtime.
-var Config = readConfig()

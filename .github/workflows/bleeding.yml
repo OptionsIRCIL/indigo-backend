@@ -97,30 +97,4 @@ jobs:
     - name: Run tests
       run:  go test ./... -v
 
-  deploy:
-    runs-on: self-hosted
-    needs:
-      - build_server
-      - build_documentation
-      - test_server_unit
-    if: ${{ github.event_name == 'push' }}
-    steps:
-      - uses: actions/download-artifact@v4
-        name: Download server artifact
-        with:
-          name: "indigo"
-
-      - uses: actions/download-artifact@v4
-        name: Download API documentation artifact
-        with:
-          name: "redoc-static.html"
-
-      - name: Install server
-        run: install -m 775 indigo /stack/bin/
-
-      - name: Install API documentation
-        run: install -m 775 redoc-static.html /stack/www/api/
-
-      - name: Restart bleeding container
-        run: docker compose --project-directory /stack restart bleeding
 

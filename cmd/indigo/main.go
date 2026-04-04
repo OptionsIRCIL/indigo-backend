@@ -8,6 +8,7 @@ import (
 	"slices"
 
 	"github.com/go-playground/validator/v10"
+	"myoptions.info/indigo/backend/internal/config"
 	"myoptions.info/indigo/backend/internal/routine"
 	"myoptions.info/indigo/backend/internal/util"
 )
@@ -43,6 +44,7 @@ Subcommands available:
 	// Execute subcommand
 	switch os.Args[1] {
 	case "serve":
+		config.InitializeConfig()
 		flags := util.ServeRuntimeFlags{}
 		set := flag.NewFlagSet("serve", flag.ExitOnError)
 		set.IntVar(&flags.Port, "port", 8080, "specifies the port the http server runs on")
@@ -62,6 +64,7 @@ Subcommands available:
 		os.Exit(routine.RunGenerateOpenApiSpec())
 
 	case "create_user":
+		config.InitializeConfig()
 		flags := util.CreateUserRuntimeFlags{}
 		set := flag.NewFlagSet("create_user", flag.ExitOnError)
 		set.StringVar(&flags.Username, "username", "", "desired username")

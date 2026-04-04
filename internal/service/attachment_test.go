@@ -117,7 +117,7 @@ func TestAttachmentManager_StoreFile(t *testing.T) {
 	}
 
 	// Valid file - image/jpeg named photo.jpeg
-	err := StoreFile("0001", "photo.jpeg", jpegContent)
+	_, err := StoreFile("0001", "photo.jpeg", jpegContent)
 	if err != nil {
 		t.Error("Failed to store valid file photo.jpeg:", err)
 	}
@@ -127,7 +127,7 @@ func TestAttachmentManager_StoreFile(t *testing.T) {
 	}
 
 	// Valid file - image/jpeg named photo.jpg
-	err = StoreFile("0002", "photo.jpg", jpegContent)
+	_, err = StoreFile("0002", "photo.jpg", jpegContent)
 	if err != nil {
 		t.Error("Failed to store valid file photo.jpg:", err)
 	}
@@ -137,19 +137,19 @@ func TestAttachmentManager_StoreFile(t *testing.T) {
 	}
 
 	// Invalid file - image/jpeg named photo.png
-	err = StoreFile("0003", "photo.png", jpegContent)
+	_, err = StoreFile("0003", "photo.png", jpegContent)
 	if err == nil {
 		t.Error("photo.png of type image/jpeg erroneously stored")
 	}
 
 	// Invalid file - text/html named not_suspicious.jpg
-	err = StoreFile("0004", "not_suspicious.jpg", htmlContent)
+	_, err = StoreFile("0004", "not_suspicious.jpg", htmlContent)
 	if err == nil {
 		t.Error("not_suspicious.jpg of type text/html erroneously stored")
 	}
 
 	// Invalid file - text/html named index.html
-	err = StoreFile("0005", "index.html", htmlContent)
+	_, err = StoreFile("0005", "index.html", htmlContent)
 	if err == nil {
 		t.Error("index.html of type text/html erroneously stored")
 	}

@@ -44,7 +44,7 @@ func getContentType(content []byte) string {
 
 // StoreFile checks an uploaded file for safety (file name, mime type, extension) and
 // writes it to the local file system. id is used as the file name and the extension
-// is omitted from the destination file name.
+// is omitted from the destination file name. Returns the detected mime or an error
 func StoreFile(id string, name string, contents []byte) (string, error) {
 	extension, valid := filenameValid(name)
 	if !valid {
