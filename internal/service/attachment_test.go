@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"myoptions.info/indigo/backend/internal/config"
 )
 
 var htmlContent = []byte(`<!DOCTYPE html>
@@ -100,13 +102,7 @@ func TestFilenameFilter(t *testing.T) {
 
 func TestAttachmentManager_StoreFile(t *testing.T) {
 	tempDir := t.TempDir()
-
-	a := AttachmentManager{}
-	a.SetAcceptableMimes([]string{"image/jpeg", "application/pdf"})
-	setDirErr := a.SetAttachmentDirectory(tempDir)
-	if setDirErr != nil {
-		t.Errorf("Failed to get temporary directory!")
-	}
+	config.Config.Attachments.Directory = tempDir
 
 	// Ensure jpegContent has expected mime
 	jpegMime := getContentType(jpegContent)
@@ -121,7 +117,7 @@ func TestAttachmentManager_StoreFile(t *testing.T) {
 	}
 
 	// Valid file - image/jpeg named photo.jpeg
-	err := a.StoreFile("0001", "photo.jpeg", jpegContent)
+	err := StoreFile("0001", "photo.jpeg", jpegContent)
 	if err != nil {
 		t.Error("Failed to store valid file photo.jpeg:", err)
 	}
@@ -131,7 +127,7 @@ func TestAttachmentManager_StoreFile(t *testing.T) {
 	}
 
 	// Valid file - image/jpeg named photo.jpg
-	err = a.StoreFile("0002", "photo.jpg", jpegContent)
+	err = StoreFile("0002", "photo.jpg", jpegContent)
 	if err != nil {
 		t.Error("Failed to store valid file photo.jpg:", err)
 	}
@@ -141,19 +137,19 @@ func TestAttachmentManager_StoreFile(t *testing.T) {
 	}
 
 	// Invalid file - image/jpeg named photo.png
-	err = a.StoreFile("0003", "photo.png", jpegContent)
+	err = StoreFile("0003", "photo.png", jpegContent)
 	if err == nil {
 		t.Error("photo.png of type image/jpeg erroneously stored")
 	}
 
 	// Invalid file - text/html named not_suspicious.jpg
-	err = a.StoreFile("0004", "not_suspicious.jpg", htmlContent)
+	err = StoreFile("0004", "not_suspicious.jpg", htmlContent)
 	if err == nil {
 		t.Error("not_suspicious.jpg of type text/html erroneously stored")
 	}
 
 	// Invalid file - text/html named index.html
-	err = a.StoreFile("0005", "index.html", htmlContent)
+	err = StoreFile("0005", "index.html", htmlContent)
 	if err == nil {
 		t.Error("index.html of type text/html erroneously stored")
 	}

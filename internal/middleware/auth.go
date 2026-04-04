@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"context"
 	"net/http"
 
 	"myoptions.info/indigo/backend/internal/service"
@@ -20,7 +19,7 @@ func RequireAuth(l *service.LdapConnection, next http.HandlerFunc) http.HandlerF
 		}
 
 		// Parse cookie
-		user, _, err := crypto.ValidateToken(cookies[0].Value)
+		token, err := crypto.StringToToken(cookies[0].Value)
 		if err != nil {
 			util.ThrowHttpStatus(w, 403)
 			return
@@ -40,8 +39,7 @@ func RequireAuth(l *service.LdapConnection, next http.HandlerFunc) http.HandlerF
 			return
 		}*/
 
-		// Add user to context and continue
-		ctx := context.WithValue(r.Context(), "user", user)
-		next.ServeHTTP(w, r.WithContext(ctx))
+		// Add token to context and continue
+		next.ServeHTTP(w, util.StoreTokenToContext(token, r))
 	}
 }

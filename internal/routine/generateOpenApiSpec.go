@@ -53,8 +53,8 @@ func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata 
 			doc.RequestBody = &openApi.Content{
 				Content: map[string]openApi.MediaType{
 					"application/json": {
-						Schema: map[string]string{
-							"$ref": "#/components/schemas/" + name,
+						Schema: openApi.SchemaType{
+							Reference: "#/components/schemas/" + name,
 						},
 					},
 				},
@@ -66,6 +66,26 @@ func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata 
 			}
 		}
 
+		if method.IsAttachment {
+			if method.Method == "POST" || method.Method == "PUT" || method.Method == "PATCH" {
+				doc.RequestBody = &openApi.Content{
+					Content: map[string]openApi.MediaType{
+						"multipart/form-data": {
+							Schema: openApi.SchemaType{
+								Type: "object",
+								Properties: map[string]openApi.SchemaType{
+									"attachment": {
+										Type:   "object",
+										Format: "binary",
+									},
+								},
+							},
+						},
+					},
+				}
+			}
+		}
+
 		for code, response := range method.Responses {
 			responseContent := map[string]openApi.MediaType{}
 			if response.Dto != nil {
@@ -73,14 +93,23 @@ func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata 
 
 				// Add response body
 				responseContent["application/json"] = openApi.MediaType{
-					Schema: map[string]string{
-						"$ref": "#/components/schemas/" + name,
+					Schema: openApi.SchemaType{
+						Reference: "#/components/schemas/" + name,
 					},
 				}
 
 				// Add schema (if applicable)
 				if _, exists := schemata[name]; !exists {
 					schemata[name] = util.ToOpenApiSchema(response.Dto.Interface, response.Dto.Groups)
+				}
+			}
+
+			if response.IsAttachment {
+				responseContent["application/octet-stream"] = openApi.MediaType{
+					Schema: openApi.SchemaType{
+						Type:   "string",
+						Format: "binary",
+					},
 				}
 			}
 
@@ -99,6 +128,10 @@ func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata 
 func routerConfigWalk(node *c.RouterConfig, base string, schemata map[string]openApi.SchemaType) map[string]map[string]openApi.Method {
 	nodes := make(map[string]map[string]openApi.Method)
 	path := util.PathConcat(base, node.Path)
+
+	for _, sub := range node.PathValueSubstitutions {
+		path = strings.Replace(path, "{"+sub.Original+"}", "{"+sub.New+"}", 1)
+	}
 
 	nodes[path] = routerConfigToMethodsElement(node, path, schemata)
 

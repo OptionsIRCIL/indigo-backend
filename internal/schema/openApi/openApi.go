@@ -8,11 +8,12 @@ type OpenApi struct {
 }
 
 type SchemaType struct {
-	Type       string                `json:"type"`
+	Type       string                `json:"type,omitempty"`
 	Properties map[string]SchemaType `json:"properties,omitempty"`
 	Items      *SchemaType           `json:"items,omitempty"`
 	Example    string                `json:"example,omitempty"`
 	Format     string                `json:"format,omitempty"`
+	Reference  string                `json:"$ref,omitempty"`
 }
 
 type Components struct {
@@ -32,7 +33,7 @@ type Content struct {
 }
 
 type MediaType struct {
-	Schema map[string]string `json:"schema"`
+	Schema SchemaType `json:"schema"`
 }
 
 type Method struct {
