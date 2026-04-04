@@ -102,6 +102,7 @@ func TestFilenameFilter(t *testing.T) {
 
 func TestAttachmentManager_StoreFile(t *testing.T) {
 	tempDir := t.TempDir()
+	config.InitializeConfig()
 	config.Config.Attachments.Directory = tempDir
 
 	// Ensure jpegContent has expected mime
