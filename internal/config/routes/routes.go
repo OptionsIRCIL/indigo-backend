@@ -426,8 +426,9 @@ type DataTransferObject struct {
 }
 
 type Response struct {
-	Description string
-	Dto         *DataTransferObject
+	Description  string
+	IsAttachment bool
+	Dto          *DataTransferObject
 }
 
 // MethodConfig defines the behavior that a mux should follow for a Method invoked on a given route.

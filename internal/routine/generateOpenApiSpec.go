@@ -67,21 +67,22 @@ func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata 
 		}
 
 		if method.IsAttachment {
-			doc.RequestBody = &openApi.Content{
-				Content: map[string]openApi.MediaType{
-					"multipart/form-data": {
-						Schema: openApi.SchemaType{
-							Type: "object",
-							Properties: map[string]openApi.SchemaType{
-								"attachment": {
-									Type:    "object",
-									Format:  "binary",
-									Example: "(my file upload data here)",
+			if method.Method == "POST" || method.Method == "PUT" || method.Method == "PATCH" {
+				doc.RequestBody = &openApi.Content{
+					Content: map[string]openApi.MediaType{
+						"multipart/form-data": {
+							Schema: openApi.SchemaType{
+								Type: "object",
+								Properties: map[string]openApi.SchemaType{
+									"attachment": {
+										Type:   "object",
+										Format: "binary",
+									},
 								},
 							},
 						},
 					},
-				},
+				}
 			}
 		}
 
@@ -100,6 +101,15 @@ func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata 
 				// Add schema (if applicable)
 				if _, exists := schemata[name]; !exists {
 					schemata[name] = util.ToOpenApiSchema(response.Dto.Interface, response.Dto.Groups)
+				}
+			}
+
+			if response.IsAttachment {
+				responseContent["application/octet-stream"] = openApi.MediaType{
+					Schema: openApi.SchemaType{
+						Type:   "string",
+						Format: "binary",
+					},
 				}
 			}
 
