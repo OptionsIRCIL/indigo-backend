@@ -5,6 +5,8 @@ import (
 	"crypto/sha512"
 	"log"
 	"net/http"
+	"net/url"
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid"
@@ -101,7 +103,8 @@ func InformationAndReferralAttachmentPost(database *gorm.DB) http.HandlerFunc {
 		fileId := uuid.New()
 		mime, storeErr := service.StoreFile(fileId.String(), file[0].Filename, fileBytes)
 		if storeErr != nil {
-			util.ThrowHttpUnhandled(w, storeErr)
+			log.Println("Encountered file storage error: ", storeErr)
+			util.ThrowHttpStatus(w, 422)
 			return
 		}
 
@@ -127,5 +130,41 @@ func InformationAndReferralAttachmentPost(database *gorm.DB) http.HandlerFunc {
 		}
 
 		util.ReturnSerialized(w, 200, fileEntity, []string{"get"})
+	}
+}
+
+func InformationAndReferralAttachmentGet(database *gorm.DB) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		ctx := context.Background()
+
+		id := r.PathValue("id")
+		count, err := gorm.G[entity.InformationAndReferralAttachment](database).Where("id = ?", id).Count(ctx, "id")
+		if count != 1 || err != nil {
+			util.ThrowHttpStatus(w, 404)
+			return
+		}
+
+		details, err := gorm.G[entity.InformationAndReferralAttachment](database).Where("id = ?", id).First(ctx)
+		if err != nil {
+			util.ThrowHttpUnhandled(w, err)
+			return
+		}
+
+		w.Header().Add("Content-Length", strconv.Itoa(int(details.Size)))
+		w.Header().Add("Content-Type", details.ContentType)
+		w.Header().Add("Content-Disposition", "attachment; filename=\""+url.QueryEscape(details.FileName)+"\"")
+
+		if r.Method == "HEAD" {
+			w.WriteHeader(200)
+			return
+		}
+
+		contents, contentsErr := service.RetrieveFile(id)
+		if contentsErr != nil {
+			util.ThrowHttpUnhandled(w, contentsErr)
+			return
+		}
+
+		w.Write(contents)
 	}
 }

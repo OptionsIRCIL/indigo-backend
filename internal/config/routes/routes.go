@@ -329,6 +329,43 @@ func CreateMux(services Services) MuxWrapper {
 						},
 					},
 				},
+				{
+					Path: "/information-and-referral-attachment/{id}",
+					Methods: []MethodConfig{
+						{
+							Method:  "HEAD",
+							Summary: "Get attachment details",
+							Handler: auth(c.InformationAndReferralAttachmentGet(services.Database)),
+							Responses: map[int]Response{
+								200: {
+									Description: "File details",
+								},
+								404: {
+									Description: "Not found",
+									Dto: &DataTransferObject{
+										Interface: util.HttpError{},
+									},
+								},
+							},
+						},
+						{
+							Method:  "GET",
+							Summary: "Get attachment details",
+							Handler: auth(c.InformationAndReferralAttachmentGet(services.Database)),
+							Responses: map[int]Response{
+								200: {
+									Description: "File contents",
+								},
+								404: {
+									Description: "Not found",
+									Dto: &DataTransferObject{
+										Interface: util.HttpError{},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
