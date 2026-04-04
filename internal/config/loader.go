@@ -131,10 +131,11 @@ func readConfig() *ApplicationConfig {
 			dir = defaultFallbackAttachmentDirectory
 			dirStat, dirErr = os.Stat(dir)
 			if os.IsNotExist(dirErr) {
-				createErr := os.Mkdir(defaultFallbackAttachmentDirectory, 770)
+				createErr := os.Mkdir(defaultFallbackAttachmentDirectory, 0770)
 				if createErr != nil {
 					log.Fatalln("Failed to create an attachments directory at " + defaultAttachmentDirectory + " and at fallback " + defaultFallbackAttachmentDirectory)
 				}
+				dirStat, dirErr = os.Stat(defaultFallbackAttachmentDirectory)
 			}
 		}
 		if dirErr != nil {

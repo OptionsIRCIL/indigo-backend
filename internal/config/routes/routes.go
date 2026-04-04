@@ -293,6 +293,38 @@ func CreateMux(services Services) MuxWrapper {
 										},
 									},
 								},
+								{
+									Path: "/attachment",
+									PathValueSubstitutions: []PathValueSubstitution{
+										{
+											Original: "id",
+											New:      "informationAndReferralId",
+										},
+									},
+									Methods: []MethodConfig{
+										{
+											Method:       "POST",
+											Summary:      "Create a new Information and Referral attachment",
+											IsAttachment: true,
+											Handler:      auth(c.InformationAndReferralAttachmentPost(services.Database)),
+											Responses: map[int]Response{
+												200: {
+													Description: "Attachment successfully created",
+													Dto: &DataTransferObject{
+														Interface: entity.InformationAndReferralAttachment{},
+														Groups:    []string{"get"},
+													},
+												},
+												422: {
+													Description: "Serialization error",
+													Dto: &DataTransferObject{
+														Interface: util.HttpError{},
+													},
+												},
+											},
+										},
+									},
+								},
 							},
 						},
 					},
@@ -363,11 +395,12 @@ type Response struct {
 
 // MethodConfig defines the behavior that a mux should follow for a Method invoked on a given route.
 type MethodConfig struct {
-	Method    string
-	Summary   string
-	InputDto  *DataTransferObject
-	Responses map[int]Response
-	Handler   http.HandlerFunc
+	Method       string
+	Summary      string
+	IsAttachment bool // If set, the content type is set to multipart/form-data with a single key "attachment"
+	InputDto     *DataTransferObject
+	Responses    map[int]Response
+	Handler      http.HandlerFunc
 }
 
 // A PathValueSubstitution may be used to rewrite PathValue keys in parent routes. Particularly

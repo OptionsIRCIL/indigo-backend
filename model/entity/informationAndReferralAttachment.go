@@ -8,27 +8,34 @@ import (
 )
 
 type InformationAndReferralAttachment struct {
-	Id       uuid.UUID `gorm:"primaryKey; type: CHAR(36)"`
-	FileName string    `gorm:"type: VARCHAR(255); not null"`
+	Id       uuid.UUID `gorm:"primaryKey; type: CHAR(36)" groups:"get"`
+	FileName string    `gorm:"type: VARCHAR(255); not null" groups:"get"`
 
 	// The file's uploader
-	EmployeeId uuid.UUID `gorm:"not null"`
+	EmployeeId uuid.UUID `gorm:"not null" groups:"get"`
 	Employee   Employee
 
+	// The parent form
+	InformationAndReferralId uuid.UUID `gorm:"not null" groups:"get"`
+	InformationAndReferral   InformationAndReferral
+
 	// MIME type for use in HEAD operations
-	ContentType string `gorm:"type: VARCHAR(255); not null"`
+	ContentType string `gorm:"type: VARCHAR(255); not null" groups:"get"`
 
 	// Content size in bytes for HEAD
-	Size uint `gorm:"type: BIGINT UNSIGNED; not null"`
+	Size uint `gorm:"type: BIGINT UNSIGNED; not null" groups:"get"`
 
 	// SHA512 signature of the file
-	Signature []byte `gorm:"type: BINARY(64); not null"`
+	Signature string `gorm:"type: BINARY(64); not null"`
 
-	CreatedAt time.Time `gorm:"not null"`
+	CreatedAt time.Time `gorm:"not null" groups:"get"`
 	DeletedAt time.Time
 }
 
 func (i *InformationAndReferralAttachment) BeforeCreate(tx *gorm.DB) (err error) {
-	i.Id, err = uuid.NewRandom()
-	return err
+	if &i.Id == nil {
+		i.Id, err = uuid.NewRandom()
+		return err
+	}
+	return nil
 }

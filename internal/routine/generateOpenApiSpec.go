@@ -53,8 +53,8 @@ func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata 
 			doc.RequestBody = &openApi.Content{
 				Content: map[string]openApi.MediaType{
 					"application/json": {
-						Schema: map[string]string{
-							"$ref": "#/components/schemas/" + name,
+						Schema: openApi.SchemaType{
+							Reference: "#/components/schemas/" + name,
 						},
 					},
 				},
@@ -66,6 +66,25 @@ func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata 
 			}
 		}
 
+		if method.IsAttachment {
+			doc.RequestBody = &openApi.Content{
+				Content: map[string]openApi.MediaType{
+					"multipart/form-data": {
+						Schema: openApi.SchemaType{
+							Type: "object",
+							Properties: map[string]openApi.SchemaType{
+								"attachment": {
+									Type:    "object",
+									Format:  "binary",
+									Example: "(my file upload data here)",
+								},
+							},
+						},
+					},
+				},
+			}
+		}
+
 		for code, response := range method.Responses {
 			responseContent := map[string]openApi.MediaType{}
 			if response.Dto != nil {
@@ -73,8 +92,8 @@ func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata 
 
 				// Add response body
 				responseContent["application/json"] = openApi.MediaType{
-					Schema: map[string]string{
-						"$ref": "#/components/schemas/" + name,
+					Schema: openApi.SchemaType{
+						Reference: "#/components/schemas/" + name,
 					},
 				}
 

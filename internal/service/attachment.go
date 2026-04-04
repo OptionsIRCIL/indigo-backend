@@ -45,33 +45,33 @@ func getContentType(content []byte) string {
 // StoreFile checks an uploaded file for safety (file name, mime type, extension) and
 // writes it to the local file system. id is used as the file name and the extension
 // is omitted from the destination file name.
-func StoreFile(id string, name string, contents []byte) error {
+func StoreFile(id string, name string, contents []byte) (string, error) {
 	extension, valid := filenameValid(name)
 	if !valid {
-		return AttachmentError{"Filename invalid"}
+		return "", AttachmentError{"Filename invalid"}
 	}
 
 	mimetype := getContentType(contents)
 	if !slices.Contains(config.Config.Attachments.PermissibleMimeTypes, mimetype) {
-		return AttachmentError{"Invalid mimetype"}
+		return "", AttachmentError{"Invalid mimetype"}
 	}
 
 	validExtensions, mimeErr := mime.ExtensionsByType(mimetype)
 	if mimeErr != nil {
-		return mimeErr
+		return "", mimeErr
 	}
 
 	if !slices.Contains(validExtensions, extension) {
-		return AttachmentError{"Extension mismatch"}
+		return "", AttachmentError{"Extension mismatch"}
 	}
 
 	// TODO: collision testing? extremely unlikely that the same UUID would be drawn twice, though
 	writeErr := os.WriteFile(
 		filepath.Join(config.Config.Attachments.Directory, id),
 		contents,
-		660,
+		0660,
 	)
-	return writeErr
+	return mimetype, writeErr
 }
 
 // RetrieveFile fetches a file from the filesystem given its ID.
