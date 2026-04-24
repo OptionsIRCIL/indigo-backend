@@ -87,8 +87,8 @@ func CreateMux(services Services) MuxWrapper {
 			Methods: []MethodConfig{
 				{
 					Method:  "GET",
-					Summary: `Demo "Hello World" endpoint.`,
-					Handler: auth(c.IndexHelloWorld),
+					Summary: `Default Home screen.`,
+					Handler: c.IndexPageHandler,
 				},
 			},
 			Children: []RouterConfig{
