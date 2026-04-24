@@ -4,11 +4,13 @@ import (
 	"encoding/json"
 	"io"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/jinzhu/copier"
 	"myoptions.info/indigo/backend/internal/schema/openApi"
+	customValidators "myoptions.info/indigo/backend/internal/validator"
 )
 
 func pascalToCamel(s string) string {
@@ -102,12 +104,18 @@ func Deserialize[K interface{}](content io.Reader, deserializationGroups []strin
 	// Validate
 	// TODO: Explore options, Utilize caching by building onto struct?
 	validate := validator.New()
+	err := validate.RegisterValidation("phone", customValidators.Phone)
+	if err != nil {
+		// This isn't supposed to happen so if this point gets hit it's a skill issue
+		return err, target
+	}
+
 	if err := validate.Struct(mask); err != nil {
 		return err, target
 	}
 
 	// Copy into target
-	err := copier.CopyWithOption(&target, mask, copier.Option{DeepCopy: true})
+	err = copier.CopyWithOption(&target, mask, copier.Option{DeepCopy: true})
 	return err, target
 }
 
@@ -127,30 +135,33 @@ func Serialize(content interface{}, groups []string) ([]byte, error) {
 	return json.Marshal(mask)
 }
 
-func maskToOpenApiSchema(reflection reflect.Type) openApi.SchemaType {
+func maskToOpenApiSchema(reflection reflect.Type, nilabilityAllowed bool, defaultValue string) openApi.SchemaType {
+	// Check nilability and dereference pointers
+	nilable := false
 	if reflection.Kind() == reflect.Pointer {
 		reflection = reflection.Elem()
+		nilable = nilabilityAllowed
 	}
 
 	// Edge cases for objects that don't serialize nicely or need additional context
 	switch reflection.PkgPath() + "/" + reflection.Name() {
 	case "github.com/google/uuid/UUID":
 		return openApi.SchemaType{
-			Type:    "string",
-			Format:  "UUIDv4",
-			Example: "00000000-0000-0000-0000-000000000000",
+			Type:     []string{"string"},
+			Format:   "UUIDv4",
+			Examples: []string{"00000000-0000-0000-0000-000000000000"},
 		}
 	case "time/Time":
 		return openApi.SchemaType{
-			Type:    "string",
-			Format:  "RFC3339",
-			Example: "2006-01-02T15:04:05Z07:00",
+			Type:     []string{"string"},
+			Format:   "RFC3339",
+			Examples: []string{"2006-01-02T15:04:05Z07:00"},
 		}
 	case "myoptions.info/indigo/backend/model/Date":
 		return openApi.SchemaType{
-			Type:    "string",
-			Format:  "YYYY-MM-DD",
-			Example: "1970-01-01",
+			Type:     []string{"string"},
+			Format:   "YYYY-MM-DD",
+			Examples: []string{"1970-01-01"},
 		}
 	}
 
@@ -165,39 +176,66 @@ func maskToOpenApiSchema(reflection reflect.Type) openApi.SchemaType {
 		reflect.Int16,
 		reflect.Int32,
 		reflect.Int64:
-		return openApi.SchemaType{Type: "integer"}
+		if nilable {
+			return openApi.SchemaType{Type: []string{"integer", "null"}, Default: defaultValue}
+		}
+		return openApi.SchemaType{Type: []string{"integer"}, Default: defaultValue}
 	case reflect.Float32, reflect.Float64:
-		return openApi.SchemaType{Type: "number"}
+		if nilable {
+			return openApi.SchemaType{Type: []string{"number", "null"}, Default: defaultValue}
+		}
+		return openApi.SchemaType{Type: []string{"number"}, Default: defaultValue}
 	case reflect.String:
-		return openApi.SchemaType{Type: "string"}
+		if nilable {
+			return openApi.SchemaType{Type: []string{"string", "null"}, Examples: []string{"?string"}, Default: defaultValue}
+		}
+		return openApi.SchemaType{Type: []string{"string"}, Default: defaultValue}
 	case reflect.Bool:
-		return openApi.SchemaType{Type: "boolean"}
+		return openApi.SchemaType{Type: []string{"boolean"}, Default: defaultValue}
 	case reflect.Slice:
-		return openApi.SchemaType{Type: "array"}
+		return openApi.SchemaType{Type: []string{"array"}}
 	case reflect.Interface, reflect.Struct:
 		// We'll need to iterate over each property
 		properties := make(map[string]openApi.SchemaType)
+		requiredProperties := make([]string, 0)
 
 		for i := range reflection.NumField() {
 			field := reflection.Field(i)
 
-			// TODO: Inserting into map like this discards field order. Better way to do this?
-			properties[pascalToCamel(field.Name)] = maskToOpenApiSchema(field.Type)
+			// Check if nilability is prohibited
+			tag, present := field.Tag.Lookup("gorm")
+			childNilabilityAllowed := !(present && strings.Contains(tag, "not null"))
+
+			// Check if a default value is given
+			childDefaultValue := ""
+			tag, present = field.Tag.Lookup("default")
+			if present {
+				childDefaultValue = tag
+			}
+
+			childSchema := maskToOpenApiSchema(field.Type, childNilabilityAllowed, childDefaultValue)
+			if childSchema.Default == "" && !slices.Contains(childSchema.Type, "null") {
+				requiredProperties = append(requiredProperties, pascalToCamel(field.Name))
+			}
+
+			// TODO: Inserting into map like this discards field order. Better way to do this?;
+			properties[pascalToCamel(field.Name)] = childSchema
 		}
 
 		return openApi.SchemaType{
-			Type:       "object",
+			Type:       []string{"object"},
 			Properties: properties,
+			Required:   requiredProperties,
 		}
 	default:
 	}
 
-	return openApi.SchemaType{Type: "null"}
+	return openApi.SchemaType{Type: []string{"null"}}
 }
 
 func ToOpenApiSchema(content interface{}, groups []string) openApi.SchemaType {
 	// Get masked struct
 	mask := toEmptyMask(reflect.TypeOf(content), groups)
 
-	return maskToOpenApiSchema(reflect.TypeOf(mask))
+	return maskToOpenApiSchema(reflect.TypeOf(mask), false, "")
 }

@@ -8,11 +8,13 @@ type OpenApi struct {
 }
 
 type SchemaType struct {
-	Type       string                `json:"type,omitempty"`
+	Type       []string              `json:"type,omitempty"`
 	Properties map[string]SchemaType `json:"properties,omitempty"`
 	Items      *SchemaType           `json:"items,omitempty"`
-	Example    string                `json:"example,omitempty"`
+	Examples   []string              `json:"examples,omitempty"`
 	Format     string                `json:"format,omitempty"`
+	Required   []string              `json:"required,omitempty"`
+	Default    string                `json:"default,omitempty"`
 	Reference  string                `json:"$ref,omitempty"`
 }
 

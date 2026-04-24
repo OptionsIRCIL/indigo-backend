@@ -192,6 +192,40 @@ func CreateMux(services Services) MuxWrapper {
 									},
 								},
 							},
+							Children: []RouterConfig{
+								{
+									Path: "/attachment",
+									PathValueSubstitutions: []PathValueSubstitution{
+										{
+											Original: "id",
+											New:      "personId",
+										},
+									},
+									Methods: []MethodConfig{
+										{
+											Method:       "POST",
+											Summary:      "Create a new attachment",
+											IsAttachment: true,
+											Handler:      auth(c.PersonAttachmentPost(services.Database)),
+											Responses: map[int]Response{
+												200: {
+													Description: "Attachment successfully created",
+													Dto: &DataTransferObject{
+														Interface: entity.PersonAttachment{},
+														Groups:    []string{"get"},
+													},
+												},
+												422: {
+													Description: "Serialization error",
+													Dto: &DataTransferObject{
+														Interface: util.HttpError{},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
 						},
 					},
 				},
@@ -293,49 +327,17 @@ func CreateMux(services Services) MuxWrapper {
 										},
 									},
 								},
-								{
-									Path: "/attachment",
-									PathValueSubstitutions: []PathValueSubstitution{
-										{
-											Original: "id",
-											New:      "informationAndReferralId",
-										},
-									},
-									Methods: []MethodConfig{
-										{
-											Method:       "POST",
-											Summary:      "Create a new Information and Referral attachment",
-											IsAttachment: true,
-											Handler:      auth(c.InformationAndReferralAttachmentPost(services.Database)),
-											Responses: map[int]Response{
-												200: {
-													Description: "Attachment successfully created",
-													Dto: &DataTransferObject{
-														Interface: entity.InformationAndReferralAttachment{},
-														Groups:    []string{"get"},
-													},
-												},
-												422: {
-													Description: "Serialization error",
-													Dto: &DataTransferObject{
-														Interface: util.HttpError{},
-													},
-												},
-											},
-										},
-									},
-								},
 							},
 						},
 					},
 				},
 				{
-					Path: "/information-and-referral-attachment/{id}",
+					Path: "/person-attachment/{id}",
 					Methods: []MethodConfig{
 						{
 							Method:  "HEAD",
 							Summary: "Get attachment details",
-							Handler: auth(c.InformationAndReferralAttachmentGet(services.Database)),
+							Handler: auth(c.PersonAttachmentGet(services.Database)),
 							Responses: map[int]Response{
 								200: {
 									Description: "File details",
@@ -350,8 +352,8 @@ func CreateMux(services Services) MuxWrapper {
 						},
 						{
 							Method:  "GET",
-							Summary: "Get attachment details",
-							Handler: auth(c.InformationAndReferralAttachmentGet(services.Database)),
+							Summary: "Get attachment contents",
+							Handler: auth(c.PersonAttachmentGet(services.Database)),
 							Responses: map[int]Response{
 								200: {
 									Description: "File contents",

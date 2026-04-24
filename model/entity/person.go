@@ -9,29 +9,22 @@ import (
 )
 
 type Person struct {
-	Id            uuid.UUID  `gorm:"primaryKey;type:char(36)" groups:"get"`
-	FirstName     string     `gorm:"size:100;not null" groups:"get,post"`
-	LastName      string     `gorm:"size:100;not null" groups:"get,post"`
-	Salutation    string     `gorm:"size:20" groups:"get,post"`
-	Gender        string     `gorm:"size:20" groups:"get,post"`
-	Ethnicity     string     `gorm:"size:100;not null" groups:"get,post"`
-	AddressLine1  string     `gorm:"size:255;not null" groups:"get,post"`
-	AddressLine2  string     `gorm:"size:255;not null" groups:"get,post"`
-	City          string     `gorm:"size:100;not null" groups:"get,post"`
-	State         string     `gorm:"size:100;not null" groups:"get,post"`
-	County        string     `gorm:"size:100;not null" groups:"get,post"`
-	OptNewsletter bool       `gorm:"size:1;not null" groups:"get,post"`
+	Id            uuid.UUID  `gorm:"primaryKey; type:char(36)" groups:"get"`
+	FirstName     string     `gorm:"size:100; not null" groups:"get,post" validate:"notblank"`
+	LastName      string     `gorm:"size:100; not null" groups:"get,post" validate:"notblank"`
+	Salutation    *string    `gorm:"size:20" groups:"get,post" default:"null"`
+	Gender        *string    `gorm:"size:20" groups:"get,post" default:"null"`
+	Ethnicity     string     `gorm:"size:100; not null" groups:"get,post" validate:"notblank"`
+	OptNewsletter bool       `gorm:"not null; default:true" groups:"get,post" default:"true"`
 	Birthday      model.Date `groups:"get,post"`
-	Email         string     `gorm:"size:150;unique;not null" groups:"get,post"`
-	Phone         string     `gorm:"size:25" groups:"get,post"`
-	Active        bool       `gorm:"default:true" groups:"get,post"`
-	Deceased      bool       `gorm:"default:false" groups:"get,post"`
-	Membership    string     `gorm:"size:255" groups:"get,post"`
+	Email         string     `gorm:"size:150; unique; not null" groups:"get,post" validate:"notblank,email"`
+	Phone         string     `gorm:"size:25; not null" groups:"get,post" validate:"notblank,phone"`
+	Active        bool       `gorm:"default:true; not null" groups:"get,post" default:"true"`
+	Deceased      bool       `gorm:"default:false; not null" groups:"get,post" default:"false"`
+	Disabilities  string     `gorm:"type: TEXT(5000)" groups:"get,post"`
 
 	AddressPhones           []AddressPhone           `gorm:"foreignKey:PersonId"`
-	Aliases                 []Alias                  `gorm:"foreignKey:PersonId"`
-	RecordDefs              []RecordDef              `gorm:"foreignKey:PersonId"`
-	DisabilityInfo          *DisabilityInfo          `gorm:"foreignKey:PersonId"`
+	Aliases                 []PersonAlias            `gorm:"foreignKey:PersonId"`
 	InformationAndReferrals []InformationAndReferral `gorm:"foreignKey:PersonId"`
 	ConsumerServices        []ConsumerService        `gorm:"foreignKey:PersonId"`
 	Goals                   []Goal                   `gorm:"foreignKey:PersonId"`

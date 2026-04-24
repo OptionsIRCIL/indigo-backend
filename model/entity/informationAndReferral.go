@@ -13,12 +13,12 @@ type InformationAndReferral struct {
 	Date       model.Date `groups:"get,post"`
 	Department string     `gorm:"type: VARCHAR(255)" groups:"get,post"`
 
-	//Referral and Requests
+	// Referral and Requests
 	Referrer       string `gorm:"type: VARCHAR(255)" groups:"get,post"`
 	ServiceRequest string `gorm:"type: VARCHAR(255)" groups:"get,post"`
 	Outcome        string `gorm:"type: VARCHAR(255)" groups:"get,post"`
 
-	//Logging (Re-Use?)
+	// Logging (Re-Use?)
 	FormDate    model.Date `groups:"get,post"`
 	ServiceType string     `gorm:"type: VARCHAR(255)" groups:"get,post"`
 	Grant       string     `gorm:"type: VARCHAR(255)" groups:"get,post"`

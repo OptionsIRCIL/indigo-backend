@@ -54,9 +54,8 @@ func ConnectToDatabase() *gorm.DB {
 
 		// People
 		&entity.Person{},
-		&entity.Alias{},
+		&entity.PersonAlias{},
 		&entity.Goal{},
-		&entity.DisabilityInfo{},
 		&entity.AddressPhone{},
 
 		// Organizations
@@ -67,7 +66,7 @@ func ConnectToDatabase() *gorm.DB {
 		// Information and Referral AKA Community Navigation AKA I&R AKA...
 		&entity.InformationAndReferral{},
 		&entity.InformationAndReferralEffort{},
-		&entity.InformationAndReferralAttachment{},
+		&entity.PersonAttachment{},
 
 		&entity.CommunityServiceEvent{},
 	)

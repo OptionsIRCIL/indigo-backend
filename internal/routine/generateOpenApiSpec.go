@@ -72,10 +72,10 @@ func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata 
 					Content: map[string]openApi.MediaType{
 						"multipart/form-data": {
 							Schema: openApi.SchemaType{
-								Type: "object",
+								Type: []string{"object"},
 								Properties: map[string]openApi.SchemaType{
 									"attachment": {
-										Type:   "object",
+										Type:   []string{"object"},
 										Format: "binary",
 									},
 								},
@@ -107,7 +107,7 @@ func routerConfigToMethodsElement(config *c.RouterConfig, path string, schemata 
 			if response.IsAttachment {
 				responseContent["application/octet-stream"] = openApi.MediaType{
 					Schema: openApi.SchemaType{
-						Type:   "string",
+						Type:   []string{"string"},
 						Format: "binary",
 					},
 				}
