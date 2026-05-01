@@ -27,11 +27,11 @@ type Person struct {
 	Active        bool       `gorm:"default:true" groups:"get,post"`
 	Deceased      bool       `gorm:"default:false" groups:"get,post"`
 	Membership    string     `gorm:"size:255" groups:"get,post"`
+	Disability    string     `gorm:"size:255" groups:"get,post"`
 
 	AddressPhones           []AddressPhone           `gorm:"foreignKey:PersonId"`
 	Aliases                 []Alias                  `gorm:"foreignKey:PersonId"`
 	RecordDefs              []RecordDef              `gorm:"foreignKey:PersonId"`
-	DisabilityInfo          *DisabilityInfo          `gorm:"foreignKey:PersonId"`
 	InformationAndReferrals []InformationAndReferral `gorm:"foreignKey:PersonId"`
 	ConsumerServices        []ConsumerService        `gorm:"foreignKey:PersonId"`
 	Goals                   []Goal                   `gorm:"foreignKey:PersonId"`
