@@ -186,7 +186,7 @@ func AuthEntry(
 			Value:  token,
 			Path:   "/",
 			MaxAge: 3600 * 10,
-			Secure:/*config.IndigoEnv != "dev"*/ false,
+			Secure:/*config.IndigoEnv != "dev"*/ true,
 			HttpOnly: false,
 			SameSite: sameSiteHeader,
 		})
@@ -210,7 +210,7 @@ func DeleteCookie() http.HandlerFunc {
 			Value:  "",
 			Path:   "/",
 			MaxAge: -1,
-			Secure:/*c.IndigoEnv != "dev"*/ false,
+			Secure:/*c.IndigoEnv != "dev"*/ true,
 			HttpOnly: false,
 			SameSite: sameSite,
 		})
