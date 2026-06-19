@@ -204,6 +204,32 @@ func CreateMux(services Services) MuxWrapper {
 										},
 									},
 								},
+								{
+									Method:  "PUT",
+									Summary: "Update an existing person",
+									Handler: auth(c.PrimitivePut[entity.Person](
+										services.Database,
+										&c.SerializationParameters{
+											SerializationGroup:   []string{"get"},
+											DeserializationGroup: []string{"post"},
+										},
+									)),
+									Responses: map[int]Response{
+										200: {
+											Description: "Person successfully updated",
+											Dto: &DataTransferObject{
+												Interface: entity.Person{},
+												Groups:    []string{"put"},
+											},
+										},
+										404: {
+											Description: "Not found",
+											Dto: &DataTransferObject{
+												Interface: util.HttpError{},
+											},
+										},
+									},
+								},
 							},
 						},
 					},
