@@ -22,7 +22,7 @@ type Person struct {
 	County        string     `gorm:"size:100;not null" groups:"get,post"`
 	OptNewsletter bool       `gorm:"size:1;not null" groups:"get,post"`
 	Birthday      model.Date `groups:"get,post"`
-	Email         string     `gorm:"size:150;unique;not null" groups:"get,post"`
+	Email         string     `gorm:"size:150" groups:"get,post"`
 	Phone         string     `gorm:"size:25" groups:"get,post"`
 	Active        bool       `gorm:"default:true" groups:"get,post"`
 	Deceased      bool       `gorm:"default:false" groups:"get,post"`
