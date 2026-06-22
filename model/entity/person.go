@@ -27,6 +27,7 @@ type Person struct {
 	Active        bool       `gorm:"default:true" groups:"get,post"`
 	Deceased      bool       `gorm:"default:false" groups:"get,post"`
 	Membership    string     `gorm:"size:255" groups:"get,post"`
+	Notes         string     `gorm:"size:255" groups:"get,post"`
 
 	AddressPhones           []AddressPhone           `gorm:"foreignKey:PersonId"`
 	Aliases                 []Alias                  `gorm:"foreignKey:PersonId"`
