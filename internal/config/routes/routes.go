@@ -215,7 +215,7 @@ func CreateMux(services Services) MuxWrapper {
 										},
 									)),
 									Responses: map[int]Response{
-										200: {
+										204: {
 											Description: "Person successfully updated",
 											Dto: &DataTransferObject{
 												Interface: entity.Person{},
