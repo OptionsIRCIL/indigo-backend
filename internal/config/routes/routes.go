@@ -124,7 +124,7 @@ func CreateMux(services Services) MuxWrapper {
 							Handler: c.DeleteCookie(),
 							Responses: map[int]Response{
 								204: {
-									Description: "yeag",
+									Description: "Deleted cookie successfully",
 								},
 							},
 						},
